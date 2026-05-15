@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { getFight, listFights } from '@/lib/api-fights'
+import { CASH_BALANCE_QUERY_KEY } from '@/lib/cash-query-keys'
 import { invalidateAllFightQueries } from '@/lib/fight-query-keys'
 import { buildRealtimeWebSocketUrl } from '@/lib/ws-url'
 import {
@@ -279,6 +280,11 @@ export function useFightLiveState() {
         if (msg.type === 'FIGHT_CORRECTED' && isRecord(msg.data)) {
           dispatch({ type: 'MERGE_CORRECTED', data: msg.data })
           void invalidateAllFightQueries(queryClient)
+          return
+        }
+
+        if (msg.type === 'TELLER_BALANCE_UPDATED' && isRecord(msg.data)) {
+          void queryClient.invalidateQueries({ queryKey: CASH_BALANCE_QUERY_KEY })
           return
         }
 

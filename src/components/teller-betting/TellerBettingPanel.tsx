@@ -10,6 +10,7 @@ import { formatMoney } from '@/lib/format-money'
 import { stakeToWireAmount } from '@/lib/teller-stake'
 import { cn } from '@/lib/utils'
 import { usePlaceBet } from '@/hooks/usePlaceBet'
+import { useSetCashBalance } from '@/hooks/useCash'
 import { useTellerStakeDraft } from '@/hooks/useTellerStakeDraft'
 import type { BetSideWire, Fight } from '@/types/api'
 
@@ -62,6 +63,7 @@ export interface TellerBettingPanelProps {
 export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps) {
   const draft = useTellerStakeDraft()
   const placeBet = usePlaceBet()
+  const setCashBalance = useSetCashBalance()
 
   const canBet =
     fight != null &&
@@ -81,6 +83,7 @@ export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps
       { fightId: fight.id, side, amount },
       {
         onSuccess: (res) => {
+          setCashBalance(res.actorBalance)
           draft.clear()
           toast.success(
             res.replay

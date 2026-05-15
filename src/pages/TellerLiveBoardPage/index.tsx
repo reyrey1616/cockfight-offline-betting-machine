@@ -18,7 +18,14 @@ export function TellerLiveBoardPage() {
   return (
     <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-background">
       <TellerChromeHeader
-        trailing={<ConnectionStatus status={vm.wsStatus} lastError={vm.lastWsError} />}
+        surface="dark"
+        trailing={
+          <ConnectionStatus
+            status={vm.wsStatus}
+            lastError={vm.lastWsError}
+            surface="dark"
+          />
+        }
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3">

@@ -9,6 +9,7 @@ import { BET_SIDE_LABEL } from '@/constants'
 import { ApiError } from '@/lib/api'
 import { getBetByCode, payBet } from '@/lib/api-bets'
 import { formatMoney } from '@/lib/format-money'
+import { useSetCashBalance } from '@/hooks/useCash'
 import type { BetRow, PlaceBetFightSummary } from '@/types/api'
 
 const TICKET_CODE_MAX = 8
@@ -84,6 +85,7 @@ function DetailLine({ label, children }: { label: string; children: ReactNode })
  * `POST /bets/:id/pay` marks the bet `PAID` when the teller confirms.
  */
 export function PayoutMachinePage() {
+  const setCashBalance = useSetCashBalance()
   const inputRef = useRef<HTMLInputElement>(null)
   const errorDialogRef = useRef<HTMLDialogElement>(null)
   const successDialogRef = useRef<HTMLDialogElement>(null)
@@ -173,6 +175,7 @@ export function PayoutMachinePage() {
     setPayPending(true)
     try {
       const res = await payBet(payable.bet.id)
+      setCashBalance(res.actorBalance)
       toast.success(res.replay ? 'Already marked as paid.' : 'Payout recorded.', { duration: 2200 })
       successDialogRef.current?.close()
     } catch (e) {

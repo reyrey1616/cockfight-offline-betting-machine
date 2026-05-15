@@ -21,3 +21,4 @@ export {
   useSessionResets,
 } from './useSession'
 export { useCreateUser, useResetUserPassword, useTellersList, useUpdateUser } from './useUsers'
+export { useCashAdvance, useCashBalance, useCashRemit, useSetCashBalance } from './useCash'

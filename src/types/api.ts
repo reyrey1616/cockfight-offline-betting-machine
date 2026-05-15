@@ -515,6 +515,27 @@ export interface ListLedgerResponse {
   nextCursor: string | null
 }
 
+export interface CashAdvanceRequest {
+  /** ADMIN only — omit when teller records own deposit. */
+  tellerId?: string
+  collectorId: string
+  amount: number
+  notes?: string
+  password: string
+}
+
+export interface CashRemitRequest {
+  collectorId: string
+  amount: number
+  notes?: string
+  password: string
+}
+
+export interface CashMutationResponse {
+  ledgerEntry: LedgerEntryRow
+  actorBalance: string
+}
+
 // ===========================================================================
 // Reports — `GET /reports/teller-commissions` (admin)
 // ===========================================================================

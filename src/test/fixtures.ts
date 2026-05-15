@@ -1,5 +1,8 @@
 import type {
   AdminUser,
+  BetRow,
+  CashBalanceResponse,
+  CashMutationResponse,
   Collector,
   Fight,
   PublicUser,
@@ -95,6 +98,57 @@ export function makeSessionPreview(
       nonZeroBalances: { violated: false, tellerCount: 0, tellers: [] }
     },
     canResetCleanly: true,
+    ...overrides
+  }
+}
+
+export function makeCashBalance(
+  overrides: Partial<CashBalanceResponse> = {}
+): CashBalanceResponse {
+  return {
+    tellerId: tellerUser.id,
+    username: tellerUser.username,
+    fullName: tellerUser.fullName,
+    balance: '1500.00',
+    ...overrides
+  }
+}
+
+export function makeCashMutation(
+  overrides: Partial<CashMutationResponse> = {}
+): CashMutationResponse {
+  return {
+    ledgerEntry: {
+      id: 'ledger-1',
+      code: 'ADV12345',
+      tellerId: tellerUser.id,
+      type: 'CASH_ADVANCE',
+      amount: '500.00',
+      betId: null,
+      collectorId: 'col-1',
+      adjustedByUserId: null,
+      notes: null,
+      createdAt: '2026-05-15T12:00:00.000Z'
+    },
+    actorBalance: '2000.00',
+    ...overrides
+  }
+}
+
+export function makeBetRow(overrides: Partial<BetRow> = {}): BetRow {
+  return {
+    id: 'bet-1',
+    code: 'ABCD1234',
+    fightId: 'fight-1',
+    tellerId: tellerUser.id,
+    side: 'MERON',
+    amount: '100.00',
+    status: 'PENDING',
+    payoutAmount: null,
+    paidAt: null,
+    voidedAt: null,
+    createdAt: '2026-05-15T12:00:00.000Z',
+    updatedAt: '2026-05-15T12:00:00.000Z',
     ...overrides
   }
 }
