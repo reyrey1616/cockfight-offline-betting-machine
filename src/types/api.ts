@@ -440,6 +440,8 @@ export interface PlaceBetFightSummary {
   walaPool: string
   meronOdds: number | null
   walaOdds: number | null
+  payoutRatioMeron: string | null
+  payoutRatioWala: string | null
 }
 
 export interface BetByCodeResponse {
@@ -462,6 +464,17 @@ export interface PlaceBetResponse {
 }
 
 export interface PayBetResponse {
+  bet: BetRow
+  fight: PlaceBetFightSummary
+  replay: boolean
+  actorBalance: string
+}
+
+export interface VoidBetRequest {
+  reason?: string
+}
+
+export interface VoidBetResponse {
   bet: BetRow
   fight: PlaceBetFightSummary
   replay: boolean

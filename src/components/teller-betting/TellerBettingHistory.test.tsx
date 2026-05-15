@@ -1,12 +1,26 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { TellerBettingHistory } from '@/components/teller-betting/TellerBettingHistory'
 import { makeBetRow, makeFight } from '@/test/fixtures'
 import { renderWithProviders } from '@/test/render'
 
+const voidMutate = vi.fn()
+
 vi.mock('@/lib/api-bets', () => ({
   listBets: vi.fn()
+}))
+
+vi.mock('@/hooks/useVoidBet', () => ({
+  useVoidBet: () => ({
+    mutate: voidMutate,
+    isPending: false
+  })
+}))
+
+vi.mock('@/hooks/useCash', () => ({
+  useSetCashBalance: () => vi.fn()
 }))
 
 import { listBets } from '@/lib/api-bets'
@@ -36,9 +50,64 @@ describe('TellerBettingHistory', () => {
     expect(screen.getByText(/250\.00/)).toBeInTheDocument()
   })
 
-  it('scopes copy to current fight number', () => {
-    mockListBets.mockResolvedValue({ bets: [], nextCursor: null })
-    renderWithProviders(<TellerBettingHistory fight={makeFight({ fightNumber: 11 })} />)
-    expect(screen.getByText(/fight #11/i)).toBeInTheDocument()
+  it('enables cancel for pending bet on open fight', async () => {
+    const user = userEvent.setup()
+    mockListBets.mockResolvedValue({
+      bets: [makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
+      nextCursor: null
+    })
+
+    renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'OPEN' })} />)
+
+    const cancelBtn = await screen.findByRole('button', { name: 'Cancel' })
+    expect(cancelBtn).toBeEnabled()
+
+    await user.click(cancelBtn)
+    expect(screen.getByRole('heading', { name: /cancel ticket/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /^cancel ticket$/i }))
+    await waitFor(() => {
+      expect(voidMutate).toHaveBeenCalledWith(
+        { betId: 'bet-void-1', body: {} },
+        expect.any(Object)
+      )
+    })
+  })
+
+  it('omits cancel action when fight is closed', async () => {
+    mockListBets.mockResolvedValue({
+      bets: [makeBetRow({ status: 'PENDING' })],
+      nextCursor: null
+    })
+
+    renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'CLOSED' })} />)
+
+    await screen.findByText(/pending/i)
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Action' })).not.toBeInTheDocument()
+  })
+
+  it('leaves action cell empty when cancel is not allowed', async () => {
+    mockListBets.mockResolvedValue({
+      bets: [makeBetRow({ status: 'VOIDED' })],
+      nextCursor: null
+    })
+
+    renderWithProviders(<TellerBettingHistory fight={makeFight()} />)
+
+    await screen.findByText(/voided/i)
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+  })
+
+  it('shows action header when open fight has cancellable tickets', async () => {
+    mockListBets.mockResolvedValue({
+      bets: [makeBetRow({ status: 'PENDING' })],
+      nextCursor: null
+    })
+
+    renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'OPEN' })} />)
+
+    expect(await screen.findByRole('columnheader', { name: 'Action' })).toBeInTheDocument()
+    expect(screen.getByText(/pending tickets can be cancelled/i)).toBeInTheDocument()
   })
 })

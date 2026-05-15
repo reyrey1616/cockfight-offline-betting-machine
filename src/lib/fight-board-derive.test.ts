@@ -6,6 +6,7 @@ import {
   deriveSessionStats,
   fightBoardHistoryViewportHeight,
   formatBoardOdds,
+  settledOddsForSide,
   formatFightLabel,
   FIGHT_BOARD_HISTORY_FETCH_MAX,
   FIGHT_BOARD_HISTORY_VISIBLE_ROWS
@@ -84,6 +85,18 @@ describe('formatBoardOdds', () => {
   it('formats odds with two decimals', () => {
     expect(formatBoardOdds(1.725)).toBe('1.73')
     expect(formatBoardOdds(null)).toBe('—')
+  })
+})
+
+
+describe('settledOddsForSide', () => {
+  it('returns payout ratio for the bet side', () => {
+    const fight = {
+      payoutRatioMeron: '1.8123',
+      payoutRatioWala: '2.3500'
+    }
+    expect(settledOddsForSide(fight, 'WALA')).toBe(2.35)
+    expect(settledOddsForSide(fight, 'MERON')).toBe(1.8123)
   })
 })
 

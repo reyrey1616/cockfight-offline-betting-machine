@@ -28,7 +28,7 @@ export function TellerLiveBoardPage() {
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-3">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-3">
         {vm.fightsQuery.isError ? (
           <Alert variant="destructive" className="mb-3">
             <AlertTitle>Could not load fights</AlertTitle>
@@ -58,7 +58,7 @@ export function TellerLiveBoardPage() {
               variant="embedded"
             />
           </div>
-          <div className="flex w-full shrink-0 flex-col gap-3 xl:w-[400px] xl:max-w-[min(100%,440px)]">
+          <div className="flex w-full shrink-0 flex-col gap-3 xl:w-[min(100%,28rem)] xl:max-w-[28rem]">
             <TellerBettingPanel fight={vm.fight} />
             <TellerBettingHistory fight={vm.fight} />
           </div>

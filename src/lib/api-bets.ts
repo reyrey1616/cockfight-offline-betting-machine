@@ -6,6 +6,8 @@ import type {
   PayBetResponse,
   PlaceBetRequest,
   PlaceBetResponse,
+  VoidBetRequest,
+  VoidBetResponse,
 } from '@/types/api'
 
 /** GET /bets — cursor list; admin may filter `tellerId`, tellers are server-scoped to self. */
@@ -32,5 +34,17 @@ export async function payBet(betId: string): Promise<PayBetResponse> {
 /** POST /bets — teller placement; mint a fresh `clientRequestId` (UUID) per attempt. */
 export async function placeBet(body: PlaceBetRequest): Promise<PlaceBetResponse> {
   const { data } = await api.post<PlaceBetResponse>('/bets', body)
+  return data
+}
+
+/** POST /bets/:id/void — cancel a pending ticket while the fight is still OPEN. */
+export async function voidBet(
+  betId: string,
+  body: VoidBetRequest = {}
+): Promise<VoidBetResponse> {
+  const { data } = await api.post<VoidBetResponse>(
+    `/bets/${encodeURIComponent(betId)}/void`,
+    body
+  )
   return data
 }

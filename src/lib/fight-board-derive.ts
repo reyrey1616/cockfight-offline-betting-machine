@@ -1,5 +1,5 @@
 import { FIGHT_STATUS_VALUE, type FightStatusValue } from '@/constants'
-import type { Fight, FightOutcomeWire } from '@/types/api'
+import type { Fight, FightOutcomeWire, PlaceBetFightSummary } from '@/types/api'
 
 /** Rows always visible in the history column; extra rows scroll inside the viewport. */
 export const FIGHT_BOARD_HISTORY_VISIBLE_ROWS = 6
@@ -109,6 +109,22 @@ export function oddsToLegacyBoardInt(odds: number | null): string {
 export function formatBoardOdds(odds: number | null): string {
   if (odds == null || !Number.isFinite(odds)) return '—'
   return odds.toFixed(2)
+}
+
+/** Settled fight payout multiplier from API decimal string. */
+export function parsePayoutRatio(raw: string | null | undefined): number | null {
+  if (raw == null || raw === '') return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+}
+
+export function settledOddsForSide(
+  fight: Pick<PlaceBetFightSummary, 'payoutRatioMeron' | 'payoutRatioWala'>,
+  side: 'MERON' | 'WALA'
+): number | null {
+  return parsePayoutRatio(
+    side === 'MERON' ? fight.payoutRatioMeron : fight.payoutRatioWala
+  )
 }
 
 export function buildFightBoardTicker(
