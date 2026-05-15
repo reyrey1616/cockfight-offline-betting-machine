@@ -1,0 +1,93 @@
+import { useQuery } from '@tanstack/react-query'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BET_SIDE_LABEL } from '@/constants'
+import { dash, fmtWhenShort } from '@/pages/DashboardPage/dashboard-dense'
+import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
+import { formatMoney } from '@/lib/format-money'
+import { listBets } from '@/lib/api-bets'
+
+export interface WinningTicketsTableProps {
+  tellerId?: string
+  resolveTellerName: (id: string) => string
+  panelClassName?: string
+}
+
+export function WinningTicketsTable({
+  tellerId,
+  resolveTellerName,
+  panelClassName
+}: WinningTicketsTableProps) {
+  const scopeKey = tellerId ?? 'ALL'
+
+  const q = useQuery({
+    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'bets', 'winning', scopeKey],
+    queryFn: () =>
+      listBets({
+        tellerId,
+        status: 'WON',
+        limit: 100
+      }),
+    staleTime: 5_000
+  })
+
+  const bets = q.data?.bets ?? []
+
+  return (
+    <Card className={dash.card(panelClassName)}>
+      <CardHeader className={dash.header}>
+        <CardTitle className={dash.title}>Winning tickets (unpaid)</CardTitle>
+        <span className={dash.liveBadge}>Live</span>
+      </CardHeader>
+      <CardContent className="flex flex-col p-0">
+        <div className={dash.bodyScroll}>
+          <table className={dash.table}>
+            <thead className={dash.thead}>
+              <tr className="border-b border-border/60">
+                <th className={dash.th}>Code</th>
+                <th className={dash.th}>Amount</th>
+                <th className={dash.th}>Side</th>
+                <th className={dash.th}>When / teller</th>
+              </tr>
+            </thead>
+            <tbody>
+              {q.isLoading ? (
+                <tr>
+                  <td colSpan={4} className={dash.empty}>
+                    Loading…
+                  </td>
+                </tr>
+              ) : q.isError ? (
+                <tr>
+                  <td colSpan={4} className={`${dash.empty} text-destructive`}>
+                    Could not load winning tickets.
+                  </td>
+                </tr>
+              ) : bets.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className={dash.empty}>
+                    No unpaid winners.
+                  </td>
+                </tr>
+              ) : (
+                bets.map((b) => (
+                  <tr key={b.id} className={dash.row}>
+                    <td className={`${dash.td} font-mono font-semibold`}>{b.code}</td>
+                    <td className={dash.tdNum}>{formatMoney(b.amount)}</td>
+                    <td className={dash.td}>{BET_SIDE_LABEL[b.side]}</td>
+                    <td className={`${dash.td} text-muted-foreground`}>
+                      <div>{fmtWhenShort(b.createdAt)}</div>
+                      <div className="text-[10px] opacity-80">
+                        {b.tellerNameSnapshot ?? resolveTellerName(b.tellerId)}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
