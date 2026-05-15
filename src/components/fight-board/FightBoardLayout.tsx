@@ -3,7 +3,9 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { formatMoney } from '@/lib/format-money'
 import {
+  fightBoardHistoryViewportHeight,
   formatBoardOdds,
+  formatFightLabel,
   type FightBoardHistoryRow,
   type FightBoardSessionStats
 } from '@/lib/fight-board-derive'
@@ -273,7 +275,7 @@ export function FightBoardLayout({
 
           <div className="mx-3 mb-2 flex items-center justify-center gap-3 rounded-lg border-2 border-zinc-600 bg-black/40 py-3">
             <span className="text-4xl font-black tabular-nums text-white">
-              {fightNumber ?? '—'}
+              {formatFightLabel(fightNumber)}
             </span>
             <span
               className={cn(
@@ -301,7 +303,13 @@ export function FightBoardLayout({
             </div>
           ) : null}
 
-          <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3">
+          <div
+            className="flex shrink-0 flex-col gap-1 overflow-y-auto overscroll-contain px-3 pb-3"
+            style={{
+              minHeight: fightBoardHistoryViewportHeight(),
+              maxHeight: fightBoardHistoryViewportHeight()
+            }}
+          >
             {history.length === 0 ? (
               <p className="py-4 text-center text-xs text-zinc-500">No finished fights in view.</p>
             ) : (
@@ -310,7 +318,9 @@ export function FightBoardLayout({
                   key={row.fightNumber}
                   className="flex items-center justify-between rounded px-3 py-2 text-sm font-bold"
                 >
-                  <span className="w-8 tabular-nums text-zinc-300">{row.fightNumber}</span>
+                  <span className="min-w-[2.5rem] tabular-nums text-zinc-300">
+                    {formatFightLabel(row.fightNumber)}
+                  </span>
                   <span
                     className={cn(
                       'min-w-[4.5rem] rounded px-3 py-1 text-center text-xs uppercase',

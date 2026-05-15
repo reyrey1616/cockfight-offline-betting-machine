@@ -14,10 +14,10 @@ export const TELLER_APP_NAV: AppNavItem[] = [
 
 /** Admin — vertical `SideNav`. */
 export const ADMIN_APP_NAV: AppNavItem[] = [
-  { to: '/dashboard', label: 'Reports' },
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/payout-machine', label: 'Payout machine' },
-  { to: '/real-time-odds', label: 'Operate fights' },
-  { to: '/admin/users', label: 'Users', roles: ['ADMIN'] },
+  { to: '/operate-fights', label: 'Operate fights' },
+  { to: '/admin/tellers', label: 'Tellers', roles: ['ADMIN'] },
   { to: '/admin/collectors', label: 'Collectors', roles: ['ADMIN'] },
   { to: '/admin/settings', label: 'Settings', roles: ['ADMIN'] }
 ]

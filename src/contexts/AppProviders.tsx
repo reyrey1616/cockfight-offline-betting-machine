@@ -20,7 +20,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <Toaster richColors position="top-center" closeButton />
+      <Toaster richColors position="top-center" closeButton style={{ zIndex: 9999 }} />
       {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   )

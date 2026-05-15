@@ -43,6 +43,16 @@ export interface FightAdminToolbarProps {
 /** Large touch targets for kiosk / stressed operators. */
 const CTRL = 'min-h-14 px-6 text-base font-semibold sm:min-w-[11rem]'
 
+/** Primary betting lifecycle actions — black when enabled; disabled uses default Button opacity. */
+const BETTING_CTRL = cn(CTRL)
+
+const HOLD_MERON =
+  'border-red-700 bg-red-600 text-white shadow-md hover:bg-red-700 disabled:opacity-50'
+const HOLD_WALA =
+  'border-blue-700 bg-blue-600 text-white shadow-md hover:bg-blue-700 disabled:opacity-50'
+const UNHOLD_ACTIVE =
+  'border-amber-500 bg-amber-400 font-bold text-black shadow-md hover:bg-amber-300 disabled:opacity-50'
+
 function mutating(...m: { isPending: boolean }[]): boolean {
   return m.some((x) => x.isPending)
 }
@@ -114,7 +124,7 @@ export function FightAdminToolbar({
         <div className="flex flex-wrap gap-3">
           <Button
             type="button"
-            className={CTRL}
+            className={BETTING_CTRL}
             disabled={!canCreate || busy}
             onClick={() =>
               createFight.mutate(undefined, {
@@ -127,8 +137,7 @@ export function FightAdminToolbar({
           </Button>
           <Button
             type="button"
-            className={CTRL}
-            variant="secondary"
+            className={BETTING_CTRL}
             disabled={!canClose || busy}
             onClick={() => setCloseConfirmOpen(true)}
           >
@@ -136,8 +145,7 @@ export function FightAdminToolbar({
           </Button>
           <Button
             type="button"
-            className={CTRL}
-            variant="outline"
+            className={BETTING_CTRL}
             disabled={!canReopen || busy}
             onClick={() => setReopenConfirmOpen(true)}
           >
@@ -160,11 +168,7 @@ export function FightAdminToolbar({
         <div className="flex flex-wrap gap-3">
           <Button
             type="button"
-            className={cn(
-              CTRL,
-              'border-red-300/80 bg-red-50/50 dark:border-red-800 dark:bg-red-950/30'
-            )}
-            variant="outline"
+            className={cn(CTRL, HOLD_MERON)}
             disabled={!canHold || busy || fight.meronAcceptingBets === false}
             title={!canHold ? 'Only while fight is open' : undefined}
             onClick={() =>
@@ -178,8 +182,10 @@ export function FightAdminToolbar({
           </Button>
           <Button
             type="button"
-            className={CTRL}
-            variant="outline"
+            className={cn(
+              CTRL,
+              fight.meronAcceptingBets === false ? UNHOLD_ACTIVE : 'border-input bg-muted text-muted-foreground'
+            )}
             disabled={!canHold || busy || fight.meronAcceptingBets !== false}
             title={!canHold ? 'Only while fight is open' : undefined}
             onClick={() =>
@@ -193,11 +199,7 @@ export function FightAdminToolbar({
           </Button>
           <Button
             type="button"
-            className={cn(
-              CTRL,
-              'border-blue-300/80 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30'
-            )}
-            variant="outline"
+            className={cn(CTRL, HOLD_WALA)}
             disabled={!canHold || busy || fight.walaAcceptingBets === false}
             title={!canHold ? 'Only while fight is open' : undefined}
             onClick={() =>
@@ -211,8 +213,10 @@ export function FightAdminToolbar({
           </Button>
           <Button
             type="button"
-            className={CTRL}
-            variant="outline"
+            className={cn(
+              CTRL,
+              fight.walaAcceptingBets === false ? UNHOLD_ACTIVE : 'border-input bg-muted text-muted-foreground'
+            )}
             disabled={!canHold || busy || fight.walaAcceptingBets !== false}
             title={!canHold ? 'Only while fight is open' : undefined}
             onClick={() =>

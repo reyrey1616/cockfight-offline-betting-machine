@@ -9,8 +9,8 @@
 //              /home
 //              /payout-machine            (teller + admin — scan winning tickets)
 //              /live-board                (legacy URL → /kiosk)
-//              /dashboard                 (admin Reports)
-//              /real-time-odds            (admin Operate fights)
+//              /dashboard                 (admin dashboard)
+//              /operate-fights            (admin Operate fights)
 //              /admin/*                   (RoleGate ADMIN)
 //   *                                      (404)
 //
@@ -77,8 +77,9 @@ export const router = createBrowserRouter([
               </RequireRole>
             )
           },
+          { path: 'real-time-odds', element: <Navigate to="/operate-fights" replace /> },
           {
-            path: 'real-time-odds',
+            path: 'operate-fights',
             element: (
               <RequireRole allow={['ADMIN']}>
                 <RealTimeOddsPage />
@@ -89,8 +90,9 @@ export const router = createBrowserRouter([
             path: 'admin',
             element: <RoleGate allow={['ADMIN']} />,
             children: [
-              { index: true, element: <Navigate to="/admin/users" replace /> },
-              { path: 'users', element: <UsersPage /> },
+              { index: true, element: <Navigate to="/admin/tellers" replace /> },
+              { path: 'users', element: <Navigate to="/admin/tellers" replace /> },
+              { path: 'tellers', element: <UsersPage /> },
               { path: 'collectors', element: <CollectorsPage /> },
               { path: 'settings', element: <SettingsPage /> }
             ]

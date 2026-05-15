@@ -18,6 +18,8 @@ import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { ApiError } from '@/lib/api'
 import type { Setting } from '@/types/api'
 
+import { SessionResetSection } from './SessionResetSection'
+
 const MAX_COMMISSION_PERCENT = 30
 const MIN_COMMISSION_PERCENT = 0
 
@@ -182,6 +184,8 @@ export function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      <SessionResetSection />
     </div>
   )
 }

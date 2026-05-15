@@ -204,6 +204,81 @@ export interface UpdateSettingsResponse {
 }
 
 // ===========================================================================
+// Session — `GET /session/preview`, `POST /session/reset`, `GET /session/resets`
+// ===========================================================================
+
+export interface SessionResetInvariantFlag {
+  violated: boolean
+  count: number
+}
+
+export interface SessionResetNonZeroBalanceTeller {
+  tellerId: string
+  username: string
+  fullName: string
+  balance: string
+}
+
+export interface SessionResetInvariants {
+  unfinishedFights: SessionResetInvariantFlag
+  unpaidWinningBets: SessionResetInvariantFlag
+  nonZeroBalances: {
+    violated: boolean
+    tellerCount: number
+    tellers?: SessionResetNonZeroBalanceTeller[]
+  }
+}
+
+export interface SessionPreviewResponse {
+  counts: {
+    fights: number
+    bets: number
+    /** All teller ledger rows (bet-linked rows included). */
+    ledger: number
+    /** Cash advances from collectors + remits back only. */
+    collectorCash: number
+  }
+  invariants: SessionResetInvariants
+  canResetCleanly: boolean
+}
+
+export interface SessionResetRow {
+  id: string
+  performedAt: string
+  performedByUserId: string
+  performedByUsername?: string | null
+  performedByFullName?: string | null
+  fightCount: number
+  betCount: number
+  ledgerCount: number
+  /** CASH_ADVANCE + REMIT rows wiped; null on older audit rows. */
+  collectorCashCount: number | null
+  notes: string | null
+  forced: boolean
+}
+
+export interface ResetSessionRequest {
+  confirm: 'WIPE-SESSION'
+  password: string
+  notes?: string
+  force?: boolean
+}
+
+export interface ResetSessionResponse {
+  sessionReset: SessionResetRow
+}
+
+export interface ListSessionResetsQuery {
+  limit?: number
+  cursor?: string
+}
+
+export interface ListSessionResetsResponse {
+  resets: SessionResetRow[]
+  nextCursor: string | null
+}
+
+// ===========================================================================
 // Fights — `GET/POST /fights`, lifecycle, side hold (see fights.schemas.js)
 // ===========================================================================
 

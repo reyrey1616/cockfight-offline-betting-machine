@@ -4,7 +4,8 @@ import { ApiError } from '@/lib/api'
 import {
   buildFightBoardTicker,
   deriveFightHistory,
-  deriveSessionStats
+  deriveSessionStats,
+  FIGHT_BOARD_HISTORY_FETCH_MAX
 } from '@/lib/fight-board-derive'
 import { useFightLiveState } from '@/hooks/useFightLiveState'
 import { useRecentFightsBoard } from '@/hooks/useRecentFightsBoard'
@@ -30,7 +31,7 @@ export function useFightBoardViewModel() {
 
   const history = useMemo(() => {
     const fights = recentQuery.data?.fights ?? []
-    return deriveFightHistory(fights, 14)
+    return deriveFightHistory(fights, FIGHT_BOARD_HISTORY_FETCH_MAX)
   }, [recentQuery.data])
 
   const tickerMessage = useMemo(() => buildFightBoardTicker(fight, null), [fight])

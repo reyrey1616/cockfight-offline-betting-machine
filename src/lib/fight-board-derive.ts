@@ -1,6 +1,27 @@
 import { FIGHT_STATUS_VALUE, type FightStatusValue } from '@/constants'
 import type { Fight, FightOutcomeWire } from '@/types/api'
 
+/** Rows always visible in the history column; extra rows scroll inside the viewport. */
+export const FIGHT_BOARD_HISTORY_VISIBLE_ROWS = 6
+
+/** Per-row height for the history viewport (matches py-2 row + result pill). */
+export const FIGHT_BOARD_HISTORY_ROW_REM = 3
+
+/** Max finished fights loaded into history (session list can scroll within the viewport). */
+export const FIGHT_BOARD_HISTORY_FETCH_MAX = 120
+
+/** Fixed height for the history list: 6 rows + gaps between them. */
+export function fightBoardHistoryViewportHeight(): string {
+  const n = FIGHT_BOARD_HISTORY_VISIBLE_ROWS
+  const row = FIGHT_BOARD_HISTORY_ROW_REM
+  return `calc(${n} * ${row}rem + ${n - 1} * 0.25rem)`
+}
+
+export function formatFightLabel(fightNumber: number | null | undefined): string {
+  if (fightNumber == null) return '—'
+  return `#${fightNumber}`
+}
+
 export interface FightBoardSessionStats {
   meronWins: number
   walaWins: number

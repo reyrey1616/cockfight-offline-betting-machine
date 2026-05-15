@@ -15,4 +15,9 @@ export { usePlaceBet } from './usePlaceBet'
 export { useRecentFightsBoard } from './useRecentFightsBoard'
 export { useCollectorsList, useCreateCollector, useUpdateCollector } from './useCollectors'
 export { useSettings, useUpdateSettings } from './useSettings'
+export {
+  useResetSession,
+  useSessionResetPreview,
+  useSessionResets,
+} from './useSession'
 export { useCreateUser, useResetUserPassword, useTellersList, useUpdateUser } from './useUsers'

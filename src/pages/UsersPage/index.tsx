@@ -1,6 +1,6 @@
-// Admin > Users — add a new teller account (sign-in + bet-ticket initials).
+// Admin > Tellers — add a new teller account (sign-in + bet-ticket initials).
 //
-// Client-side checks mirror `users.schemas.js` so users get fast feedback;
+// Client-side checks mirror `users.schemas.js` so tellers get fast feedback;
 // the API remains the source of truth (policy denylist, uniqueness, etc.).
 
 import { useState, type FormEvent } from 'react'
@@ -109,7 +109,7 @@ export function UsersPage() {
   return (
     <div className="space-y-8 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Tellers</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Tellers sign in here to take bets. Edit a row to change their name, access, or
           password. Accounts are never permanently deleted — you can only turn access off
@@ -141,7 +141,7 @@ export function UsersPage() {
 
         <Card className="max-w-md lg:max-w-none">
           <CardHeader>
-            <CardTitle>Create user</CardTitle>
+            <CardTitle>Create teller</CardTitle>
             <CardDescription>
               Add someone who can sign in at this kiosk and take bets. They are
               always added as a teller. Share the username and initial password
@@ -214,13 +214,13 @@ export function UsersPage() {
 
               {apiMessage ? (
                 <Alert variant="destructive">
-                  <AlertTitle>Could not create user</AlertTitle>
+                  <AlertTitle>Could not create teller</AlertTitle>
                   <AlertDescription>{apiMessage}</AlertDescription>
                 </Alert>
               ) : null}
 
               <Button type="submit" disabled={isPending}>
-                {isPending ? 'Creating…' : 'Create user'}
+                {isPending ? 'Creating…' : 'Create teller'}
               </Button>
             </form>
           </CardContent>
