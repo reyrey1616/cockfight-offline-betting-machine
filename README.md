@@ -72,3 +72,4 @@ export default defineConfig([
 ])
 ```
 # cockfight-offline-betting-machine
+# cockfight-offline-betting-api
