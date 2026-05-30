@@ -8,6 +8,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 
+import { AppLogo } from '@/components/AppLogo'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -52,7 +53,8 @@ export function LoginPage() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-sm">
-        <CardHeader>
+        <CardHeader className="items-center text-center">
+          <AppLogo size="login" className="mx-auto object-center" />
           <CardTitle className="text-xl">Sign in</CardTitle>
           <CardDescription>{BRANDING.LOGIN_KIOSK_TAGLINE}</CardDescription>
         </CardHeader>

@@ -14,6 +14,7 @@ describe('printCollectorBadge', () => {
       isElectron: true,
       printBetTicket: vi.fn(),
       printCollectorBadge,
+      printCashSlip: vi.fn(),
       getDesktopConfig: vi.fn()
     }
 

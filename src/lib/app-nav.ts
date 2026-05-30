@@ -8,6 +8,7 @@ export interface AppNavItem {
 
 /** Teller — horizontal links inside `TellerChromeHeader`. */
 export const TELLER_APP_NAV: AppNavItem[] = [
+  { to: '/display', label: 'Live board' },
   { to: '/payout-machine', label: 'Payout machine' },
   { to: '/kiosk', label: 'Betting kiosk', roles: ['TELLER'] }
 ]
@@ -15,6 +16,7 @@ export const TELLER_APP_NAV: AppNavItem[] = [
 /** Admin — vertical `SideNav`. */
 export const ADMIN_APP_NAV: AppNavItem[] = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/display', label: 'Arena display' },
   { to: '/payout-machine', label: 'Payout machine' },
   { to: '/operate-fights', label: 'Operate fights' },
   { to: '/admin/tellers', label: 'Tellers', roles: ['ADMIN'] },

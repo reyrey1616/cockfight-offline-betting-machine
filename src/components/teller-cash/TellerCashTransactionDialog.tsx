@@ -17,7 +17,14 @@ export type CashTransactionKind = 'deposit' | 'remit'
 export interface TellerCashTransactionDialogProps {
   kind: CashTransactionKind | null
   onClose: () => void
-  onSuccess?: (args: { kind: CashTransactionKind; code: string | null; balance: string }) => void
+  onSuccess?: (args: {
+    kind: CashTransactionKind
+    code: string | null
+    balance: string
+    collectorName: string
+    amount: string
+    notes?: string
+  }) => void
 }
 
 export function TellerCashTransactionDialog({
@@ -84,6 +91,9 @@ export function TellerCashTransactionDialog({
     setFormError(null)
     const notesTrimmed = notes.trim() || undefined
     const passwordValue = password
+    const collector = collectors.find((c) => c.id === collectorId)
+    const collectorName = collector?.name ?? '—'
+    const amountStr = parsed.toFixed(2)
 
     if (kind === 'deposit') {
       advance.mutate(
@@ -93,7 +103,10 @@ export function TellerCashTransactionDialog({
             onSuccess?.({
               kind,
               code: res.ledgerEntry.code,
-              balance: res.actorBalance
+              balance: res.actorBalance,
+              collectorName,
+              amount: amountStr,
+              notes: notesTrimmed
             })
             handleClose()
           },
@@ -112,7 +125,10 @@ export function TellerCashTransactionDialog({
           onSuccess?.({
             kind,
             code: res.ledgerEntry.code,
-            balance: res.actorBalance
+            balance: res.actorBalance,
+            collectorName,
+            amount: amountStr,
+            notes: notesTrimmed
           })
           handleClose()
         },

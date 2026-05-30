@@ -14,9 +14,10 @@
 // ---------------------------------------------------------------------------
 
 export const BRANDING = {
-  APP_NAME: 'Cockfight Betting',
+  /** Accessible name for `AppLogo` (screen readers, document title). */
+  LOGO_ALT: 'FMJ',
   /** Login card subtitle */
-  LOGIN_KIOSK_TAGLINE: 'Cockfight betting kiosk — admin or teller account'
+  LOGIN_KIOSK_TAGLINE: 'Betting kiosk — admin or teller account'
 } as const
 
 // ---------------------------------------------------------------------------

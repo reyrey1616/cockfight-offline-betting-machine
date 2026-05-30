@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,6 +7,7 @@ import { dash, fmtWhenShort } from '@/pages/DashboardPage/dashboard-dense'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { formatMoney } from '@/lib/format-money'
 import { listBets } from '@/lib/api-bets'
+import { cn } from '@/lib/utils'
 
 export interface WinningTicketsTableProps {
   tellerId?: string
@@ -32,6 +34,11 @@ export function WinningTicketsTable({
   })
 
   const bets = q.data?.bets ?? []
+
+  const totalAmount = useMemo(
+    () => bets.reduce((sum, b) => sum + Number(b.amount), 0),
+    [bets]
+  )
 
   return (
     <Card className={dash.card(panelClassName)}>
@@ -86,6 +93,12 @@ export function WinningTicketsTable({
               )}
             </tbody>
           </table>
+        </div>
+        <div className={cn(dash.summaryBar, 'flex items-center justify-between gap-2')}>
+          <span>
+            {bets.length} ticket{bets.length === 1 ? '' : 's'}
+          </span>
+          <span>{formatMoney(totalAmount.toFixed(2))}</span>
         </div>
       </CardContent>
     </Card>

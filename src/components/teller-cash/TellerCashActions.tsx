@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuthUser } from '@/store/auth'
 
+import { printCashSlip } from '@/lib/print-cash-slip'
+
 import { TellerCashTransactionDialog, type CashTransactionKind } from './TellerCashTransactionDialog'
 
 export interface TellerCashActionsProps {
@@ -54,13 +56,29 @@ export function TellerCashActions({ className, surface = 'default' }: TellerCash
       <TellerCashTransactionDialog
         kind={dialogKind}
         onClose={() => setDialogKind(null)}
-        onSuccess={({ kind, code, balance }) => {
+        onSuccess={async ({ kind, code, balance, collectorName, amount, notes }) => {
           const label = kind === 'deposit' ? 'Deposit' : 'Remittance'
+          let printed = false
+          if (code) {
+            printed = await printCashSlip({
+              kind,
+              code,
+              amount,
+              collectorName,
+              tellerName: user?.fullName ?? '—',
+              notes
+            })
+          }
           toast.success(`${label} recorded`, {
             description: code
-              ? `Receipt ${code} · Balance ${balance}`
+              ? printed
+                ? `Receipt ${code} printed · Balance ${balance}`
+                : `Receipt ${code} — print failed · Balance ${balance}`
               : `New balance ${balance}`
           })
+          if (code && !printed) {
+            toast.error('Could not print cash receipt. Check printer or pop-up settings.')
+          }
         }}
       />
     </>

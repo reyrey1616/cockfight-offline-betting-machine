@@ -25,6 +25,18 @@ export interface CollectorBadgePrintPayload {
 
 export type CollectorBadgePrintResult = BetTicketPrintResult
 
+export interface CashSlipPrintPayload {
+  kind: 'deposit' | 'remit'
+  code: string
+  amount: string
+  collectorName: string
+  tellerName: string
+  notes?: string
+  barcodePngDataUrl: string
+}
+
+export type CashSlipPrintResult = BetTicketPrintResult
+
 export interface DesktopConfigSummary {
   apiBaseUrl: string
   silentPrint: boolean
@@ -35,6 +47,7 @@ export interface ElectronAPI {
   isElectron: true
   printBetTicket: (payload: BetTicketPrintPayload) => Promise<BetTicketPrintResult>
   printCollectorBadge: (payload: CollectorBadgePrintPayload) => Promise<CollectorBadgePrintResult>
+  printCashSlip: (payload: CashSlipPrintPayload) => Promise<CashSlipPrintResult>
   getDesktopConfig: () => Promise<DesktopConfigSummary>
 }
 

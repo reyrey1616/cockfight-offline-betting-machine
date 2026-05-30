@@ -25,6 +25,8 @@ describe('printBetTicket', () => {
     window.electronAPI = {
       isElectron: true,
       printBetTicket: printBetTicketIpc,
+      printCollectorBadge: vi.fn(),
+      printCashSlip: vi.fn(),
       getDesktopConfig: vi.fn()
     }
 

@@ -582,3 +582,37 @@ export interface TellerCommissionsResponse {
   tellers: TellerCommissionRow[]
   totals: TellerCommissionsTotals
 }
+
+// ===========================================================================
+// Reports — `GET /reports/fight-commissions` (admin)
+// ===========================================================================
+
+export interface FightCommissionRow {
+  fightId: string
+  fightNumber: number
+  status: string
+  outcome: string | null
+  commissionRate: string
+  grossHandle: string
+  commission: string
+  betCount: number
+  pendingBetCount: number
+  wasCorrected: boolean
+  settledAt: string | null
+}
+
+export interface FightCommissionsTotals {
+  fightCount: number
+  betCount: number
+  grossHandle: string
+  commission: string
+}
+
+export interface FightCommissionsResponse {
+  scope: {
+    since: string | null
+    until: string | null
+  }
+  fights: FightCommissionRow[]
+  totals: FightCommissionsTotals
+}

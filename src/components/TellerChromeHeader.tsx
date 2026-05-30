@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { AppLogo } from '@/components/AppLogo'
 import { TellerAppNavLinks } from '@/components/TellerAppNavLinks'
 import { TellerCashActions } from '@/components/teller-cash/TellerCashActions'
 import { TellerCashOnHand } from '@/components/teller-cash/TellerCashOnHand'
 import { Button } from '@/components/ui/button'
-import { BRANDING, USER_ROLE_LABEL } from '@/constants'
+import { USER_ROLE_LABEL } from '@/constants'
 import { useLogout } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthUser } from '@/store/auth'
@@ -56,15 +57,17 @@ export function TellerChromeHeader({
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
         <div className="min-w-0 shrink-0">
-          <div
-            className={cn(
-              'text-base font-semibold tracking-tight',
-              isDark && 'text-zinc-100'
-            )}
-          >
-            {BRANDING.APP_NAME}
-          </div>
-          {subtitle ? <div className="mt-0.5">{subtitle}</div> : null}
+          <AppLogo />
+          {subtitle ? (
+            <div
+              className={cn(
+                'mt-0.5 text-xs text-muted-foreground',
+                isDark && 'text-zinc-400'
+              )}
+            >
+              {subtitle}
+            </div>
+          ) : null}
         </div>
         <TellerAppNavLinks
           surface={surface}

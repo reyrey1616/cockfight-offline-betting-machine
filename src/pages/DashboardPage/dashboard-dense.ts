@@ -28,6 +28,7 @@ export const dash = {
   tdNum: 'px-2 py-1 tabular-nums align-top',
   row: 'border-b border-border/50 last:border-0',
   empty: 'px-2 py-8 text-center text-[11px] text-muted-foreground',
-  /** Pinned below `bodyScroll` (not inside the scroll area). */
-  summaryBar: 'flex flex-row items-center justify-between gap-2 border-t border-border/80 bg-muted/30 px-3 py-2 text-[11px] font-semibold'
+  /** Totals row below the scrollable table body. */
+  summaryBar:
+    'shrink-0 border-t border-border/80 bg-muted/30 px-2 py-1.5 text-[10px] font-semibold tabular-nums'
 } as const

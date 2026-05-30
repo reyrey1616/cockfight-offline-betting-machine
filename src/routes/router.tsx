@@ -3,7 +3,7 @@
 // Tree:
 //   /login                                 (public)
 //   /  ─►  ProtectedRoute
-//         /display                         (fullscreen fight board — read-only; not in nav)
+//         /display                         (arena live board — fullscreen; minimize → nav)
 //         /kiosk                           (teller full-viewport betting kiosk; outside AppLayout)
 //         └► AppLayout
 //              /home
@@ -20,7 +20,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { CollectorsPage } from '@/pages/CollectorsPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { FightBoardPage } from '@/pages/FightBoardPage'
+import { DisplayPage } from '@/pages/DisplayPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -45,7 +45,11 @@ export const router = createBrowserRouter([
     children: [
       {
         path: 'display',
-        element: <FightBoardPage mode="display" layout="fullscreen" />
+        element: (
+          <RequireRole allow={['ADMIN', 'TELLER']}>
+            <DisplayPage />
+          </RequireRole>
+        )
       },
       {
         path: 'kiosk',
