@@ -29,13 +29,11 @@ import { resolveApiBaseUrl } from '@/lib/api-base-url'
 import { useAuthStore } from '@/store/auth'
 import type { ApiErrorBody } from '@/types/api'
 
-const BASE_URL = resolveApiBaseUrl()
-
 // Created ONCE at module load. Anywhere in the app that needs to talk
 // to the API imports `api` from here — never construct another axios
 // instance, that would bypass our interceptors.
 export const api: AxiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: resolveApiBaseUrl(),
   // 15s is generous for a LAN deployment but short enough that a hung
   // request surfaces a UX error instead of spinning forever.
   timeout: 15_000,
@@ -48,6 +46,7 @@ export const api: AxiosInstance = axios.create({
 // Request interceptor — inject bearer token.
 // ---------------------------------------------------------------------------
 api.interceptors.request.use((config) => {
+  config.baseURL = resolveApiBaseUrl()
   const token = useAuthStore.getState().token
   if (token) {
     // axios v1: headers is an AxiosHeaders instance with `.set()`.

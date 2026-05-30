@@ -100,10 +100,15 @@ export function useFightWinnerFlash(
     flashKeyRef.current = dedupeKey
 
     setFlash({ winner: o, fightNumber: fight.fightNumber })
+  }, [fight, dismissDeferred, enabled])
 
+  // Timer lives in its own effect: `fight` updates on every WS tick would
+  // otherwise clear this timeout in the main effect cleanup before 3s elapses.
+  useEffect(() => {
+    if (!flash) return
     const tid = window.setTimeout(dismiss, AUTO_DISMISS_MS)
     return () => window.clearTimeout(tid)
-  }, [fight, dismiss, dismissDeferred, enabled])
+  }, [flash, dismiss])
 
   return { flash, dismiss }
 }

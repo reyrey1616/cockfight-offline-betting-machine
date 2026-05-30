@@ -4,7 +4,7 @@ import JsBarcode from 'jsbarcode'
 
 import { Button } from '@/components/ui/button'
 import { nativeModalDialogClassName } from '@/lib/nativeModalDialogClassName'
-import { printCollectorBadgeWithBarcodeImage } from '@/lib/print-collector-barcode'
+import { printCollectorBadge } from '@/lib/print-collector-badge'
 import type { Collector } from '@/types/api'
 
 export interface BarcodePrintDialogProps {
@@ -40,15 +40,17 @@ export function BarcodePrintDialog({ collector, onClose }: BarcodePrintDialogPro
     })
   }, [collector?.id, collector?.code])
 
-  function handlePrint() {
+  async function handlePrint() {
     if (!collector || !canvasRef.current) return
-    const ok = printCollectorBadgeWithBarcodeImage(
+    const ok = await printCollectorBadge({
       collector,
-      canvasRef.current.toDataURL('image/png')
-    )
+      barcodePngDataUrl: canvasRef.current.toDataURL('image/png')
+    })
     if (!ok) {
       toast.error(
-        'This browser blocked the print window. Allow pop-ups for this site and try again.'
+        window.electronAPI?.isElectron
+          ? 'Print failed. Check the default printer and config.json.'
+          : 'Print failed. Allow pop-ups for this site or use the Cockfight desktop app on the server PC.'
       )
       return
     }
@@ -77,7 +79,8 @@ export function BarcodePrintDialog({ collector, onClose }: BarcodePrintDialogPro
           <div className="flex flex-col items-center gap-4 px-6 py-6">
             <canvas ref={canvasRef} key={collector.id} className="max-w-full" />
             <p className="text-center text-xs text-muted-foreground">
-              Check the preview, then print. Cancel returns you to the list without printing.
+              80mm thermal layout. On the server PC with Electron, prints silently to the default
+              printer. In a browser, opens a print preview. Cancel returns without printing.
             </p>
             <div className="flex w-full flex-wrap justify-end gap-2">
               <Button type="button" variant="outline" onClick={onClose}>
