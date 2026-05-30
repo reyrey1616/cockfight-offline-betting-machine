@@ -2,7 +2,9 @@
   "name": "cockfight-offline-betting-machine-client",
   "private": true,
   "version": "0.0.0",
+  "description": "FMJ offline betting — web admin UI and Electron teller kiosk.",
   "type": "module",
+  "main": "electron/main.mjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -10,7 +12,17 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "dev:electron": "node scripts/run-dev.mjs",
+    "electron": "electron .",
+    "electron:prod": "node scripts/run-prod.mjs",
+    "generate-icon": "node scripts/generate-icon.mjs",
+    "prepare-kiosk-config": "node scripts/prepare-kiosk-config.mjs",
+    "eject-dmg": "node scripts/eject-kiosk-dmg-volume.mjs",
+    "pack": "npm run eject-dmg && npm run prepare-kiosk-config && npm run generate-icon && npm run build && electron-builder --dir",
+    "dist": "npm run eject-dmg && npm run prepare-kiosk-config && npm run generate-icon && npm run build && electron-builder",
+    "dist:mac": "npm run dist -- --mac",
+    "dist:win": "npm run dist -- --win"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.8",
@@ -41,16 +53,70 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.5.0",
+    "electron": "^35.1.2",
+    "electron-builder": "^25.1.8",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "happy-dom": "^20.0.11",
     "postcss": "^8.5.14",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "happy-dom": "^20.0.11",
     "vite": "^8.0.12",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.cockfight.offline.betting.kiosk",
+    "productName": "FMJ offline betting machine",
+    "icon": "build/icon.png",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "config.example.json",
+      "config.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "config.example.json",
+        "to": "config.example.json"
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "dist",
+        "to": "client-dist",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "config.json",
+        "to": "config.json"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": ["dmg"],
+      "icon": "build/icon.png"
+    },
+    "dmg": {
+      "title": "FMJ offline betting machine"
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FMJ offline betting machine"
+    }
   }
 }

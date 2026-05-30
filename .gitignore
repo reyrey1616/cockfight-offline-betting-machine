@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Electron kiosk packaging
+release/
+config.json
+build/icon.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

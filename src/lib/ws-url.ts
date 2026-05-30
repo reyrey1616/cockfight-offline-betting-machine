@@ -1,8 +1,8 @@
-import { api } from '@/lib/api'
+import { resolveApiBaseUrl } from '@/lib/api-base-url'
 
 /** Same host as axios `baseURL` — see `resolveApiBaseUrl` / env vars. */
 export function getApiHttpOrigin(): string {
-  const base = api.defaults.baseURL ?? 'http://localhost:8000'
+  const base = resolveApiBaseUrl()
   try {
     return new URL(base).origin
   } catch {

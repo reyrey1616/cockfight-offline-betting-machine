@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { AppLogo } from '@/components/AppLogo'
 import { cn } from '@/lib/utils'
 import { formatMoney } from '@/lib/format-money'
 import {
@@ -244,14 +245,11 @@ export function FightBoardLayout({
 
         {/* Center — session + current + history */}
         <div className="flex min-h-[260px] flex-col border-b border-zinc-800 bg-zinc-900 lg:border-b-0 lg:border-r">
-          <div
-            className="py-3 text-center text-lg font-black uppercase tracking-wider text-black"
-            style={{
-              background:
-                'repeating-linear-gradient(-45deg, #facc15, #facc15 12px, #171717 12px, #171717 24px)'
-            }}
-          >
-            Results
+          <div className="flex flex-col items-center justify-center gap-1 border-b border-zinc-600 bg-zinc-200 px-3 py-3">
+            <AppLogo size="board" />
+            <p className="text-sm font-black uppercase tracking-widest text-zinc-800 lg:text-base">
+              Results
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-2 p-3">

@@ -22,6 +22,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { BRANDING } from '@/constants'
 import { useLogin } from '@/hooks/useAuth'
+import {
+  getDefaultApiBaseUrlForLogin,
+  normalizeApiBaseUrlInput,
+  setStoredApiBaseUrl
+} from '@/lib/api-base-url'
 import { useAuthUser, useIsAuthenticated } from '@/store/auth'
 
 interface LocationState {
@@ -39,14 +44,29 @@ export function LoginPage() {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [apiBaseUrl, setApiBaseUrl] = useState(() => getDefaultApiBaseUrlForLogin())
+  const [serverUrlError, setServerUrlError] = useState<string | null>(null)
   const { mutate, isPending, error } = useLogin()
 
   if (isAuthed) {
     return <Navigate to={fallback} replace />
   }
 
+  function persistServerUrl(): boolean {
+    const normalized = normalizeApiBaseUrlInput(apiBaseUrl)
+    if (!normalized) {
+      setServerUrlError('Enter a valid server URL, e.g. http://192.168.1.6:8000')
+      return false
+    }
+    setStoredApiBaseUrl(apiBaseUrl)
+    setApiBaseUrl(normalized)
+    setServerUrlError(null)
+    return true
+  }
+
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (!persistServerUrl()) return
     mutate({ username: username.trim(), password })
   }
 
@@ -60,6 +80,34 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="api-base-url">Server URL</Label>
+              <Input
+                id="api-base-url"
+                name="apiBaseUrl"
+                type="url"
+                inputMode="url"
+                autoComplete="off"
+                placeholder="http://192.168.1.6:8000"
+                value={apiBaseUrl}
+                onChange={(e) => {
+                  setApiBaseUrl(e.target.value)
+                  setServerUrlError(null)
+                }}
+                onBlur={() => {
+                  if (apiBaseUrl.trim()) persistServerUrl()
+                }}
+                disabled={isPending}
+              />
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                LAN address of the betting server (not localhost on kiosk PCs). Saved on this
+                device until you change it.
+              </p>
+              {serverUrlError ? (
+                <p className="text-[11px] text-destructive">{serverUrlError}</p>
+              ) : null}
+            </div>
+
             <div className="flex flex-col gap-2">
               <Label htmlFor="username">Username</Label>
               <Input
