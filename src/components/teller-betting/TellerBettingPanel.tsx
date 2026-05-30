@@ -8,9 +8,9 @@ import { BET_SIDE_VALUE, FIGHT_STATUS_LABEL } from '@/constants'
 import { ApiError } from '@/lib/api'
 import { formatMoney } from '@/lib/format-money'
 import { stakeToWireAmount } from '@/lib/teller-stake'
+import { isSideHeld } from '@/lib/fight-board-derive'
 import { cn } from '@/lib/utils'
 import { usePlaceBet } from '@/hooks/usePlaceBet'
-import { useSetCashBalance } from '@/hooks/useCash'
 import { useTellerStakeDraft } from '@/hooks/useTellerStakeDraft'
 import type { BetSideWire, Fight } from '@/types/api'
 
@@ -63,16 +63,15 @@ export interface TellerBettingPanelProps {
 export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps) {
   const draft = useTellerStakeDraft()
   const placeBet = usePlaceBet()
-  const setCashBalance = useSetCashBalance()
 
   const canBet =
     fight != null &&
-    fight.status === 'OPEN' &&
+    (fight.status === 'OPEN' || fight.status === 'LAST_CALL') &&
     draft.parsed != null &&
     draft.validationError == null
 
-  const meronBlocked = fight?.status === 'OPEN' && fight.meronAcceptingBets === false
-  const walaBlocked = fight?.status === 'OPEN' && fight.walaAcceptingBets === false
+  const meronBlocked = isSideHeld(fight, 'MERON')
+  const walaBlocked = isSideHeld(fight, 'WALA')
 
   const pendingSide = placeBet.isPending ? placeBet.variables?.side ?? null : null
 
@@ -83,7 +82,6 @@ export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps
       { fightId: fight.id, side, amount },
       {
         onSuccess: (res) => {
-          setCashBalance(res.actorBalance)
           draft.clear()
           toast.success(
             res.replay
@@ -111,9 +109,11 @@ export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps
         <p className="text-xs text-muted-foreground">
           {fight == null
             ? 'No active fight.'
-            : fight.status !== 'OPEN'
+            : fight.status !== 'OPEN' && fight.status !== 'LAST_CALL'
               ? `Fight #${fight.fightNumber} is ${statusLabel} — betting locked.`
-              : `Fight #${fight.fightNumber} — type amount (digits and . only), then tap Meron or Wala.`}
+              : fight.status === 'LAST_CALL'
+                ? `Fight #${fight.fightNumber} is LAST CALL — place bets now, closing anytime soon.`
+                : `Fight #${fight.fightNumber} — type amount (digits and . only), then tap Meron or Wala.`}
         </p>
       </CardHeader>
       <CardContent className="space-y-4 p-4">
@@ -146,7 +146,7 @@ export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Digits only (and one decimal for centavos). Letters and symbols are ignored.
+            Minimum bet is 100. Digits only (and one decimal for centavos). Letters and symbols are ignored.
           </p>
           {draft.validationError && draft.rawDisplay.length > 0 ? (
             <p className="text-xs text-destructive">{draft.validationError}</p>

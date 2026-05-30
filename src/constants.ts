@@ -80,6 +80,7 @@ export const BET_STATUS_LABEL: Record<BetStatusValue, string> = {
 export const FIGHT_STATUS_VALUE = {
   SCHEDULED: 'SCHEDULED',
   OPEN: 'OPEN',
+  LAST_CALL: 'LAST_CALL',
   CLOSED: 'CLOSED',
   SETTLED: 'SETTLED',
   CANCELLED: 'CANCELLED'
@@ -95,6 +96,7 @@ export const FIGHT_STATUS_VALUES = Object.values(
 export const FIGHT_STATUS_LABEL: Record<FightStatusValue, string> = {
   SCHEDULED: 'Scheduled',
   OPEN: 'Open — accepting bets',
+  LAST_CALL: 'Last call — closing soon',
   CLOSED: 'Closed — awaiting result',
   SETTLED: 'Settled',
   CANCELLED: 'Cancelled'
@@ -108,8 +110,7 @@ export const FIGHT_OUTCOME_VALUE = {
   MERON: 'MERON',
   WALA: 'WALA',
   DRAW: 'DRAW',
-  CANCELLED: 'CANCELLED',
-  NO_CONTEST: 'NO_CONTEST'
+  CANCELLED: 'CANCELLED'
 } as const
 
 export type FightOutcomeValue =
@@ -123,8 +124,7 @@ export const FIGHT_OUTCOME_LABEL: Record<FightOutcomeValue, string> = {
   MERON: 'Meron wins',
   WALA: 'Wala wins',
   DRAW: 'Draw — refunds',
-  CANCELLED: 'Cancelled — refunds',
-  NO_CONTEST: 'No contest — refunds'
+  CANCELLED: 'Cancelled — refunds'
 }
 
 // ---------------------------------------------------------------------------

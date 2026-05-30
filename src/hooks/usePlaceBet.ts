@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { placeBet } from '@/lib/api-bets'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { invalidateAllFightQueries } from '@/lib/fight-query-keys'
+import { useSetCashBalance } from '@/hooks/useCash'
 import { invalidateTellerBetHistoryQueries } from '@/lib/teller-bets-query-keys'
 import { randomUuid } from '@/lib/random-uuid'
 import type { BetSideWire, PlaceBetRequest, PlaceBetResponse } from '@/types/api'
@@ -22,6 +23,7 @@ export interface PlaceBetVariables {
  */
 export function usePlaceBet() {
   const queryClient = useQueryClient()
+  const setCashBalance = useSetCashBalance()
 
   return useMutation({
     mutationFn: async ({ fightId, side, amount }: PlaceBetVariables): Promise<PlaceBetResponse> => {
@@ -33,7 +35,8 @@ export function usePlaceBet() {
       }
       return placeBet(body)
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setCashBalance(data.actorBalance)
       void invalidateTellerBetHistoryQueries(queryClient)
       void invalidateAllFightQueries(queryClient)
       void queryClient.invalidateQueries({ queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX] })

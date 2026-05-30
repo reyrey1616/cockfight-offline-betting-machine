@@ -28,7 +28,7 @@ const BET_STATUS_MESSAGES: Record<string, string> = {
 }
 
 /**
- * Mirrors backend `evaluateBetVoidEligibility` — void only while fight is OPEN
+ * Mirrors backend `evaluateBetVoidEligibility` — void only while fight is OPEN/LAST_CALL
  * and bet is PENDING. Side hold does not block voiding an existing ticket.
  */
 export function getBetVoidEligibility({
@@ -46,7 +46,7 @@ export function getBetVoidEligibility({
     return { canVoid: false, blockReason: BET_STATUS_MESSAGES.VOIDED }
   }
 
-  if (fight.status !== 'OPEN') {
+  if (fight.status !== 'OPEN' && fight.status !== 'LAST_CALL') {
     return {
       canVoid: false,
       blockReason:

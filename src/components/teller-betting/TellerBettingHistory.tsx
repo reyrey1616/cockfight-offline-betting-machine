@@ -39,7 +39,7 @@ function statusClass(status: BetRow['status']): string {
  */
 export function TellerBettingHistory({ fight, className }: TellerBettingHistoryProps) {
   const fightId = fight?.id ?? null
-  const fightOpen = fight?.status === 'OPEN'
+  const fightOpen = fight?.status === 'OPEN' || fight?.status === 'LAST_CALL'
   const [voidTarget, setVoidTarget] = useState<BetRow | null>(null)
   const voidBet = useVoidBet()
 
@@ -94,7 +94,7 @@ export function TellerBettingHistory({ fight, className }: TellerBettingHistoryP
             {fight == null
               ? 'Your most recent tickets (any fight).'
               : fightOpen
-                ? `Fight #${fight.fightNumber} — pending tickets can be cancelled while betting is open.`
+                ? `Fight #${fight.fightNumber} — pending tickets can be cancelled while betting is open/last call.`
                 : `Tickets on fight #${fight.fightNumber}.`}
           </p>
         </CardHeader>

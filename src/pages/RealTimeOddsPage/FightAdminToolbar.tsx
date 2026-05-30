@@ -33,6 +33,8 @@ export interface FightAdminToolbarProps {
   fight: Fight
   createFight: MutPick<CreateFightResponse, void>
   closeFight: MutPick<FightActionResponse, string>
+  setFightLastCall: MutPick<FightActionResponse, string>
+  resumeFightOpen: MutPick<FightActionResponse, string>
   reopenFight: MutPick<FightActionResponse, string>
   settleFight: MutPick<FightActionResponse, { id: string; body: SettleFightRequest }>
   cancelFight: MutPick<FightActionResponse, { id: string; body?: CancelFightRequest }>
@@ -69,6 +71,8 @@ export function FightAdminToolbar({
   fight,
   createFight,
   closeFight,
+  setFightLastCall,
+  resumeFightOpen,
   reopenFight,
   settleFight,
   cancelFight,
@@ -83,6 +87,8 @@ export function FightAdminToolbar({
   const busy = mutating(
     createFight,
     closeFight,
+    setFightLastCall,
+    resumeFightOpen,
     reopenFight,
     settleFight,
     cancelFight,
@@ -94,15 +100,17 @@ export function FightAdminToolbar({
     toast.error(e instanceof ApiError ? e.message : e.message)
   }
 
-  const canCreate = fight.status !== 'OPEN'
-  const canClose = fight.status === 'OPEN'
+  const canCreate = fight.status !== 'OPEN' && fight.status !== 'LAST_CALL'
+  const canSetLastCall = fight.status === 'OPEN'
+  const canResumeOpen = fight.status === 'LAST_CALL'
+  const canClose = fight.status === 'OPEN' || fight.status === 'LAST_CALL'
   const canReopen = fight.status === 'CLOSED'
   const canDeclareWinner = fight.status === 'CLOSED'
-  const canCancel = fight.status === 'OPEN' || fight.status === 'CLOSED'
-  const canHold = fight.status === 'OPEN'
+  const canCancel = fight.status === 'OPEN' || fight.status === 'LAST_CALL' || fight.status === 'CLOSED'
+  const canHold = fight.status === 'OPEN' || fight.status === 'LAST_CALL'
 
   const settleLockedTitle =
-    fight.status === 'OPEN'
+    fight.status === 'OPEN' || fight.status === 'LAST_CALL'
       ? 'Close betting first, then declare the winner here.'
       : fight.status === 'CLOSED'
         ? undefined
@@ -134,6 +142,32 @@ export function FightAdminToolbar({
             }
           >
             Open new fight
+          </Button>
+          <Button
+            type="button"
+            className={BETTING_CTRL}
+            disabled={!canSetLastCall || busy}
+            onClick={() =>
+              setFightLastCall.mutate(fight.id, {
+                onSuccess: () => toast.success('Fight set to last call'),
+                onError: onErr
+              })
+            }
+          >
+            Last call
+          </Button>
+          <Button
+            type="button"
+            className={BETTING_CTRL}
+            disabled={!canResumeOpen || busy}
+            onClick={() =>
+              resumeFightOpen.mutate(fight.id, {
+                onSuccess: () => toast.success('Fight resumed to open'),
+                onError: onErr
+              })
+            }
+          >
+            Resume open
           </Button>
           <Button
             type="button"
@@ -284,24 +318,6 @@ export function FightAdminToolbar({
             }}
           >
             Draw
-          </Button>
-          <Button
-            type="button"
-            className={cn(
-              CTRL,
-              canDeclareWinner
-                ? ''
-                : 'bg-muted text-muted-foreground hover:bg-muted border-transparent'
-            )}
-            variant={canDeclareWinner ? 'secondary' : 'outline'}
-            disabled={!canDeclareWinner || busy}
-            title={!canDeclareWinner ? settleLockedTitle : undefined}
-            onClick={() => {
-              if (!canDeclareWinner) return
-              setSettleOutcome('NO_CONTEST')
-            }}
-          >
-            No contest
           </Button>
         </div>
       </div>

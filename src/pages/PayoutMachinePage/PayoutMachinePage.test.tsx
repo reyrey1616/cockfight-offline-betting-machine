@@ -3,12 +3,21 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { PayoutMachinePage } from '@/pages/PayoutMachinePage'
-import { makeBetRow, makeFight } from '@/test/fixtures'
+import { makeBetRow } from '@/test/fixtures'
 import { renderWithProviders } from '@/test/render'
 
 vi.mock('@/lib/api-bets', () => ({
   getBetByCode: vi.fn(),
   payBet: vi.fn()
+}))
+
+const payMutate = vi.fn()
+
+vi.mock('@/hooks/usePayBet', () => ({
+  usePayBet: () => ({
+    mutate: payMutate,
+    isPending: false
+  })
 }))
 
 vi.mock('@/hooks/useCash', () => ({

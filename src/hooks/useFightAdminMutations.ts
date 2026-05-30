@@ -5,7 +5,9 @@ import {
   closeFight,
   createFight,
   holdFightSide,
+  resumeFightOpen,
   reopenFight,
+  setFightLastCall,
   settleFight,
   unholdFightSide
 } from '@/lib/api-fights'
@@ -36,6 +38,22 @@ export function useFightAdminMutations(onServerFight: (fight: Fight) => void) {
 
   const reopen = useMutation({
     mutationFn: (id: string) => reopenFight(id),
+    onSuccess: (res) => {
+      onServerFight(res.fight)
+      invalidate()
+    }
+  })
+
+  const lastCall = useMutation({
+    mutationFn: (id: string) => setFightLastCall(id),
+    onSuccess: (res) => {
+      onServerFight(res.fight)
+      invalidate()
+    }
+  })
+
+  const resumeOpen = useMutation({
+    mutationFn: (id: string) => resumeFightOpen(id),
     onSuccess: (res) => {
       onServerFight(res.fight)
       invalidate()
@@ -81,6 +99,8 @@ export function useFightAdminMutations(onServerFight: (fight: Fight) => void) {
   return {
     createFight: create,
     closeFight: close,
+    setFightLastCall: lastCall,
+    resumeFightOpen: resumeOpen,
     reopenFight: reopen,
     settleFight: settle,
     cancelFight: cancel,

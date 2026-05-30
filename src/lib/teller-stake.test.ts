@@ -31,6 +31,7 @@ describe('parseStakeInput', () => {
     expect(parseStakeInput('')).toBeNull()
     expect(parseStakeInput('.')).toBeNull()
     expect(parseStakeInput('0')).toBeNull()
+    expect(parseStakeInput('99.99')).toBeNull()
     expect(parseStakeInput('1000001')).toBeNull()
   })
 })
@@ -42,6 +43,11 @@ describe('stakeValidationMessage', () => {
 
   it('returns message for invalid stake', () => {
     expect(stakeValidationMessage(null)).toMatch(/valid amount/i)
+  })
+
+  it('enforces minimum stake', () => {
+    expect(stakeValidationMessage(99.99)).toMatch(/minimum stake is 100/i)
+    expect(stakeValidationMessage(100)).toBeNull()
   })
 })
 

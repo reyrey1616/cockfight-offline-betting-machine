@@ -7,64 +7,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { BET_SIDE_LABEL } from '@/constants'
 import { ApiError } from '@/lib/api'
-import { getBetByCode, payBet } from '@/lib/api-bets'
+import { getBetByCode } from '@/lib/api-bets'
 import { formatBoardOdds, settledOddsForSide } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
-import { useSetCashBalance } from '@/hooks/useCash'
+import { disqualificationMessage, isPayableWin } from '@/lib/payout-eligibility'
+import { usePayBet } from '@/hooks/usePayBet'
+import { useAuthUser } from '@/store/auth'
 import type { BetRow, PlaceBetFightSummary } from '@/types/api'
-import { sanitizeTicketInput, TICKET_CODE_MAX } from '@/pages/PayoutMachinePage/payout-scan'
+import { isCompleteTicketCode, sanitizeTicketInput, TICKET_CODE_MAX } from '@/pages/PayoutMachinePage/payout-scan'
 
 function fightDetailsLine(fight: PlaceBetFightSummary, bet: BetRow): string {
   const side = BET_SIDE_LABEL[bet.side]
   return `Fight #${fight.fightNumber} · ${side}`
-}
-
-/** Winning ticket on a settled fight with a payout figure — ready to pay out. */
-function isPayableWin(bet: BetRow, fight: PlaceBetFightSummary): boolean {
-  return (
-    bet.status === 'WON' &&
-    fight.status === 'SETTLED' &&
-    bet.payoutAmount != null &&
-    bet.payoutAmount !== ''
-  )
-}
-
-/**
- * When the API returned a bet but it must not be paid from this screen,
- * map to the cashier-facing modal copy.
- */
-function disqualificationMessage(bet: BetRow, fight: PlaceBetFightSummary): string {
-  if (fight.status === 'CANCELLED') {
-    return 'This bet has been cancelled.'
-  }
-  if (fight.status !== 'SETTLED') {
-    return 'This fight has not been settled yet.'
-  }
-  if (bet.status === 'VOIDED') {
-    return 'This bet has been cancelled.'
-  }
-  if (bet.status === 'LOST') {
-    return 'This bet did not win.'
-  }
-  if (
-    bet.status === 'REFUNDED' &&
-    (fight.outcome === 'DRAW' || fight.outcome === 'NO_CONTEST')
-  ) {
-    return 'This fight ended in a draw.'
-  }
-  if (bet.status === 'REFUNDED') {
-    return 'This bet has been cancelled.'
-  }
-  if (bet.status === 'PAID') {
-    return 'This winning ticket has already been paid out.'
-  }
-  if (bet.status === 'WON' && (bet.payoutAmount == null || bet.payoutAmount === '')) {
-    return 'This winning ticket does not have a payout amount on record.'
-  }
-  if (bet.status === 'PENDING') {
-    return 'This fight has not been settled yet.'
-  }
-  return 'This bet did not win.'
 }
 
 function DetailLine({ label, children }: { label: string; children: ReactNode }) {
@@ -81,7 +35,8 @@ function DetailLine({ label, children }: { label: string; children: ReactNode })
  * `POST /bets/:id/pay` marks the bet `PAID` when the teller confirms.
  */
 export function PayoutMachinePage() {
-  const setCashBalance = useSetCashBalance()
+  const actor = useAuthUser()
+  const payBetMutation = usePayBet()
   const inputRef = useRef<HTMLInputElement>(null)
   const errorDialogRef = useRef<HTMLDialogElement>(null)
   const successDialogRef = useRef<HTMLDialogElement>(null)
@@ -89,7 +44,7 @@ export function PayoutMachinePage() {
 
   const [scanValue, setScanValue] = useState('')
   const [lookupPending, setLookupPending] = useState(false)
-  const [payPending, setPayPending] = useState(false)
+  const payPending = payBetMutation.isPending
   const [dialogMessage, setDialogMessage] = useState<string | null>(null)
   const [payable, setPayable] = useState<{ bet: BetRow; fight: PlaceBetFightSummary } | null>(null)
 
@@ -125,7 +80,7 @@ export function PayoutMachinePage() {
 
   async function runLookup(code: string) {
     const normalized = sanitizeTicketInput(code)
-    if (normalized.length !== TICKET_CODE_MAX) return
+    if (!isCompleteTicketCode(normalized)) return
     if (lookupPending || lookupInFlightRef.current === normalized) return
     lookupInFlightRef.current = normalized
 
@@ -133,6 +88,11 @@ export function PayoutMachinePage() {
     setLookupPending(true)
     try {
       const { bet, fight } = await getBetByCode(normalized)
+      if (actor && bet.tellerId !== actor.id) {
+        refocusScanner = false
+        setDialogMessage('This ticket is not bet on this teller.')
+        return
+      }
       if (isPayableWin(bet, fight)) {
         refocusScanner = false
         errorDialogRef.current?.close()
@@ -163,7 +123,7 @@ export function PayoutMachinePage() {
   function trySubmitScan(code: string) {
     if (scannerLocked || lookupPending) return
     const normalized = sanitizeTicketInput(code)
-    if (normalized.length !== TICKET_CODE_MAX) return
+    if (!isCompleteTicketCode(normalized)) return
     void runLookup(normalized)
   }
 
@@ -186,20 +146,18 @@ export function PayoutMachinePage() {
     trySubmitScan(code)
   }
 
-  async function handleConfirmPaid() {
+  function handleConfirmPaid() {
     if (!payable) return
-    setPayPending(true)
-    try {
-      const res = await payBet(payable.bet.id)
-      setCashBalance(res.actorBalance)
-      toast.success(res.replay ? 'Already marked as paid.' : 'Payout recorded.', { duration: 2200 })
-      successDialogRef.current?.close()
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Could not record payout.'
-      toast.error(msg)
-    } finally {
-      setPayPending(false)
-    }
+    payBetMutation.mutate(payable.bet.id, {
+      onSuccess: (res) => {
+        toast.success(res.replay ? 'Already marked as paid.' : 'Payout recorded.', { duration: 2200 })
+        successDialogRef.current?.close()
+      },
+      onError: (e) => {
+        const msg = e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Could not record payout.'
+        toast.error(msg)
+      }
+    })
   }
 
   const payoutOdds =

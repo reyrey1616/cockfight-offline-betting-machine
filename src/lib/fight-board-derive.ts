@@ -1,4 +1,5 @@
 import { FIGHT_STATUS_VALUE, type FightStatusValue } from '@/constants'
+import type { BetSideWire } from '@/types/api'
 import type { Fight, FightOutcomeWire, PlaceBetFightSummary } from '@/types/api'
 
 /** Rows always visible in the history column; extra rows scroll inside the viewport. */
@@ -33,7 +34,6 @@ export type FightBoardHistoryResult =
   | 'MERON'
   | 'WALA'
   | 'DRAW'
-  | 'NO_CONTEST'
   | 'CANCELLED'
 
 export interface FightBoardHistoryRow {
@@ -42,7 +42,7 @@ export interface FightBoardHistoryRow {
 }
 
 function isDrawLike(o: FightOutcomeWire): boolean {
-  return o === 'DRAW' || o === 'NO_CONTEST'
+  return o === 'DRAW'
 }
 
 /**
@@ -97,18 +97,24 @@ export function deriveFightHistory(
   return rows
 }
 
-export function oddsToLegacyBoardInt(odds: number | null): string {
-  if (odds == null) return '—'
-  return String(Math.round(odds * 100))
+/**
+ * Payout multiplier display on the board / payout desk:
+ * - always 3 decimals
+ * - truncates (floors) excess decimals instead of rounding
+ */
+
+/** True when the fight is OPEN and admin has held a side (no new bets on that side). */
+export function isSideHeld(
+  fight: Pick<Fight, 'status' | 'meronAcceptingBets' | 'walaAcceptingBets'> | null,
+  side: BetSideWire
+): boolean {
+  if (fight == null || (fight.status !== 'OPEN' && fight.status !== 'LAST_CALL')) return false
+  return side === 'MERON' ? fight.meronAcceptingBets === false : fight.walaAcceptingBets === false
 }
 
-/**
- * Live parimutuel multiplier on the fight board — two fractional digits,
- * aligned with `computeLiveOdds` (API + client) and common retail display.
- */
 export function formatBoardOdds(odds: number | null): string {
   if (odds == null || !Number.isFinite(odds)) return '—'
-  return odds.toFixed(2)
+  return floorToDecimals(odds, 3).toFixed(3)
 }
 
 /** Settled fight payout multiplier from API decimal string. */
@@ -127,6 +133,29 @@ export function settledOddsForSide(
   )
 }
 
+/**
+ * Odds shown on the board for one side: live projection while betting is open,
+ * frozen settlement payout ratio after the fight is SETTLED.
+ */
+export function boardOddsForSide(
+  fight: Pick<
+    Fight,
+    'status' | 'meronOdds' | 'walaOdds' | 'payoutRatioMeron' | 'payoutRatioWala'
+  > | null,
+  side: 'MERON' | 'WALA'
+): number | null {
+  if (fight == null) return null
+  if (fight.status === FIGHT_STATUS_VALUE.SETTLED) {
+    return settledOddsForSide(fight, side)
+  }
+  return side === 'MERON' ? fight.meronOdds : fight.walaOdds
+}
+
+function floorToDecimals(value: number, decimals: number): number {
+  const factor = 10 ** decimals
+  return Math.floor(value * factor) / factor
+}
+
 export function buildFightBoardTicker(
   fight: Fight | null,
   fightNumberFallback: number | null
@@ -140,8 +169,21 @@ export function buildFightBoardTicker(
       return `FIGHT #${n} — SCHEDULED. STANDBY UNTIL ADMIN OPENS BETTING.`
     case 'OPEN': {
       let msg = `FIGHT #${n} IS NOW OPEN. YOU MAY NOW PLACE YOUR BETS!!!`
-      const meronHeld = !fight.meronAcceptingBets
-      const walaHeld = !fight.walaAcceptingBets
+      const meronHeld = isSideHeld(fight, 'MERON')
+      const walaHeld = isSideHeld(fight, 'WALA')
+      if (meronHeld && walaHeld) {
+        msg += ' BOTH SIDES HELD — NO NEW BETS.'
+      } else if (meronHeld) {
+        msg += ' MERON HELD — NO NEW MERON BETS.'
+      } else if (walaHeld) {
+        msg += ' WALA HELD — NO NEW WALA BETS.'
+      }
+      return msg
+    }
+    case 'LAST_CALL': {
+      let msg = `FIGHT #${n} LAST CALL. PLACE BETS NOW — CLOSING ANYTIME SOON.`
+      const meronHeld = isSideHeld(fight, 'MERON')
+      const walaHeld = isSideHeld(fight, 'WALA')
       if (meronHeld && walaHeld) {
         msg += ' BOTH SIDES HELD — NO NEW BETS.'
       } else if (meronHeld) {

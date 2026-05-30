@@ -22,4 +22,5 @@ export {
 } from './useSession'
 export { useCreateUser, useResetUserPassword, useTellersList, useUpdateUser } from './useUsers'
 export { useCashAdvance, useCashBalance, useCashRemit, useSetCashBalance } from './useCash'
+export { usePayBet } from './usePayBet'
 export { useVoidBet } from './useVoidBet'

@@ -9,6 +9,7 @@ export function pickCurrentDisplayFight(
   if (!fights?.length) return undefined
   return (
     fights.find((f) => f.status === 'OPEN') ??
+    fights.find((f) => f.status === 'LAST_CALL') ??
     fights.find((f) => f.status === 'CLOSED') ??
     fights[0]
   )
@@ -67,8 +68,7 @@ function asOutcome(v: unknown): FightOutcomeWire | null {
     v === 'MERON' ||
     v === 'WALA' ||
     v === 'DRAW' ||
-    v === 'CANCELLED' ||
-    v === 'NO_CONTEST'
+    v === 'CANCELLED'
   ) {
     return v
   }
@@ -80,6 +80,7 @@ function asStatus(v: unknown): FightStatusValue | undefined {
   if (
     v === 'SCHEDULED' ||
     v === 'OPEN' ||
+    v === 'LAST_CALL' ||
     v === 'CLOSED' ||
     v === 'SETTLED' ||
     v === 'CANCELLED'

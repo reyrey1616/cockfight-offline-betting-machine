@@ -22,11 +22,6 @@ const COPY: Record<
     title: 'Declare a draw?',
     body: 'All pending stakes are refunded (draw / patas / balik taya). Voided tickets stay voided.',
     confirm: 'Save draw'
-  },
-  NO_CONTEST: {
-    title: 'Declare no contest?',
-    body: 'Same as draw — pending stakes are refunded. Use when the fight cannot be graded normally.',
-    confirm: 'Save no contest'
   }
 }
 

@@ -37,16 +37,20 @@ export function useFightWinnerFlash(
     setFlash(null)
   }, [])
 
+  const dismissDeferred = useCallback(() => {
+    queueMicrotask(() => setFlash(null))
+  }, [])
+
   useEffect(() => {
     if (!enabled) {
-      dismiss()
+      dismissDeferred()
       snapshotRef.current = null
       return
     }
 
     if (!fight) {
       snapshotRef.current = null
-      dismiss()
+      dismissDeferred()
       return
     }
 
@@ -59,16 +63,17 @@ export function useFightWinnerFlash(
 
     if (fight.status !== 'SETTLED') {
       if (prev && prev.id !== fight.id) {
-        dismiss()
+        dismissDeferred()
       } else if (
         prev &&
         prev.id === fight.id &&
         prev.status === 'SETTLED' &&
         (fight.status === 'OPEN' ||
+          fight.status === 'LAST_CALL' ||
           fight.status === 'SCHEDULED' ||
           fight.status === 'CANCELLED')
       ) {
-        dismiss()
+        dismissDeferred()
       }
       snapshotRef.current = next
       return
@@ -98,7 +103,7 @@ export function useFightWinnerFlash(
 
     const tid = window.setTimeout(dismiss, AUTO_DISMISS_MS)
     return () => window.clearTimeout(tid)
-  }, [fight, dismiss, enabled])
+  }, [fight, dismiss, dismissDeferred, enabled])
 
   return { flash, dismiss }
 }

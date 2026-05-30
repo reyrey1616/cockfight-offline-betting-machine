@@ -34,6 +34,8 @@ function statusPillClass(status: FightStatusValue | null): string {
       return 'bg-zinc-400 text-black font-bold'
     case 'OPEN':
       return 'bg-lime-400 text-black font-black shadow-[0_0_20px_rgba(163,230,53,0.5)]'
+    case 'LAST_CALL':
+      return 'bg-amber-400 text-black font-black shadow-[0_0_20px_rgba(251,191,36,0.6)]'
     case 'CLOSED':
       return 'bg-amber-400 text-black font-bold'
     case 'SETTLED':
@@ -56,11 +58,13 @@ function statusContextLine(
   meronHeld: boolean,
   walaHeld: boolean
 ): string | null {
-  if (status === 'OPEN') {
+  if (status === 'OPEN' || status === 'LAST_CALL') {
     if (meronHeld && walaHeld) return 'Both sides held — admin paused all new bets.'
     if (meronHeld) return 'Meron held — only Wala tickets until admin releases Meron.'
     if (walaHeld) return 'Wala held — only Meron tickets until admin releases Wala.'
-    return 'Fight open — pools and odds update with each bet.'
+    return status === 'LAST_CALL'
+      ? 'Last call — betting is still open but may close any time.'
+      : 'Fight open — pools and odds update with each bet.'
   }
   if (status === 'CLOSED') return 'Betting closed — pools locked until admin settles.'
   if (status === 'SETTLED') return 'Settled — board shows final pools / odds snapshot.'
@@ -80,6 +84,11 @@ function tickerBarClasses(status: FightStatusValue | null): { bar: string; text:
     case 'OPEN':
       return {
         bar: 'border-t-4 border-lime-400 bg-lime-500',
+        text: 'text-black'
+      }
+    case 'LAST_CALL':
+      return {
+        bar: 'border-t-4 border-amber-700 bg-amber-500',
         text: 'text-black'
       }
     case 'CLOSED':
@@ -113,8 +122,6 @@ function historyRowClass(result: FightBoardHistoryRow['result']): string {
       return 'bg-blue-600 text-white'
     case 'DRAW':
       return 'bg-emerald-600 text-white'
-    case 'NO_CONTEST':
-      return 'bg-emerald-700 text-white'
     case 'CANCELLED':
       return 'bg-zinc-600 text-white'
     default:
@@ -126,7 +133,8 @@ function sideOddsDisplay(
   odds: number | null,
   sideHeld: boolean,
   heldLabel: 'MERON' | 'WALA',
-  bettingOpen: boolean
+  bettingOpen: boolean,
+  fightSettled: boolean
 ): ReactNode {
   const oddsText = formatBoardOdds(odds)
   const oddsClass = cn(
@@ -152,7 +160,7 @@ function sideOddsDisplay(
     <div className="space-y-1">
       <p className={oddsClass}>{oddsText}</p>
       <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-        {bettingOpen ? 'Payout ×' : 'Last odds'}
+        {bettingOpen ? 'Payout ×' : fightSettled ? 'Final payout ×' : 'Last odds'}
       </p>
     </div>
   )
@@ -178,7 +186,8 @@ export function FightBoardLayout({
 }: FightBoardLayoutProps) {
   const full = variant === 'fullscreen'
   const tickerSkin = tickerBarClasses(fightStatus)
-  const bettingOpen = fightStatus === 'OPEN'
+  const bettingOpen = fightStatus === 'OPEN' || fightStatus === 'LAST_CALL'
+  const fightSettled = fightStatus === 'SETTLED'
   const contextLine = statusContextLine(fightStatus, meronSideHeld, walaSideHeld)
 
   return (
@@ -224,7 +233,7 @@ export function FightBoardLayout({
                   bettingOpen && meronSideHeld && 'ring-4 ring-amber-500 ring-inset'
                 )}
               >
-                {sideOddsDisplay(meronOdds, meronSideHeld, 'MERON', bettingOpen)}
+                {sideOddsDisplay(meronOdds, meronSideHeld, 'MERON', bettingOpen, fightSettled)}
               </div>
             </div>
           </div>
@@ -327,7 +336,7 @@ export function FightBoardLayout({
                       historyRowClass(row.result)
                     )}
                   >
-                    {row.result === 'NO_CONTEST' ? 'NC' : row.result}
+                    {row.result}
                   </span>
                 </div>
               ))
@@ -370,7 +379,7 @@ export function FightBoardLayout({
                   bettingOpen && walaSideHeld && 'ring-4 ring-amber-500 ring-inset'
                 )}
               >
-                {sideOddsDisplay(walaOdds, walaSideHeld, 'WALA', bettingOpen)}
+                {sideOddsDisplay(walaOdds, walaSideHeld, 'WALA', bettingOpen, fightSettled)}
               </div>
             </div>
           </div>

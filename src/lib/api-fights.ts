@@ -49,6 +49,18 @@ export async function closeFight(id: string): Promise<FightActionResponse> {
   return data
 }
 
+/** POST /fights/:id/last-call — admin; OPEN → LAST_CALL. */
+export async function setFightLastCall(id: string): Promise<FightActionResponse> {
+  const { data } = await api.post<FightActionResponse>(`/fights/${id}/last-call`)
+  return data
+}
+
+/** POST /fights/:id/resume-open — admin; LAST_CALL → OPEN. */
+export async function resumeFightOpen(id: string): Promise<FightActionResponse> {
+  const { data } = await api.post<FightActionResponse>(`/fights/${id}/resume-open`)
+  return data
+}
+
 /** POST /fights/:id/reopen — admin; CLOSED → OPEN (undo mistaken close). */
 export async function reopenFight(id: string): Promise<FightActionResponse> {
   const { data } = await api.post<FightActionResponse>(`/fights/${id}/reopen`)

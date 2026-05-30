@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  boardOddsForSide,
   buildFightBoardTicker,
   deriveFightHistory,
   deriveSessionStats,
@@ -39,14 +40,13 @@ describe('deriveSessionStats', () => {
       makeFight({ fightNumber: 1, status: 'SETTLED', outcome: 'MERON' }),
       makeFight({ fightNumber: 2, status: 'SETTLED', outcome: 'WALA' }),
       makeFight({ fightNumber: 3, status: 'SETTLED', outcome: 'DRAW' }),
-      makeFight({ fightNumber: 4, status: 'SETTLED', outcome: 'NO_CONTEST' }),
-      makeFight({ fightNumber: 5, status: 'CANCELLED', outcome: null }),
-      makeFight({ fightNumber: 6, status: 'OPEN', outcome: null })
+      makeFight({ fightNumber: 4, status: 'CANCELLED', outcome: null }),
+      makeFight({ fightNumber: 5, status: 'OPEN', outcome: null })
     ]
     expect(deriveSessionStats(fights)).toEqual({
       meronWins: 1,
       walaWins: 1,
-      draws: 2,
+      draws: 1,
       cancelled: 1
     })
   })
@@ -82,8 +82,9 @@ describe('deriveFightHistory', () => {
 })
 
 describe('formatBoardOdds', () => {
-  it('formats odds with two decimals', () => {
-    expect(formatBoardOdds(1.725)).toBe('1.73')
+  it('formats odds with three decimals using floor truncation', () => {
+    expect(formatBoardOdds(1.7259)).toBe('1.725')
+    expect(formatBoardOdds(1.2)).toBe('1.200')
     expect(formatBoardOdds(null)).toBe('—')
   })
 })
@@ -97,6 +98,26 @@ describe('settledOddsForSide', () => {
     }
     expect(settledOddsForSide(fight, 'WALA')).toBe(2.35)
     expect(settledOddsForSide(fight, 'MERON')).toBe(1.8123)
+  })
+})
+
+describe('boardOddsForSide', () => {
+  it('uses live odds while betting is open', () => {
+    const fight = makeFight({
+      status: 'OPEN',
+      meronOdds: 2.45,
+      payoutRatioMeron: '2.3020'
+    })
+    expect(boardOddsForSide(fight, 'MERON')).toBe(2.45)
+  })
+
+  it('uses frozen payout ratio after settlement', () => {
+    const fight = makeFight({
+      status: 'SETTLED',
+      meronOdds: 2.45,
+      payoutRatioMeron: '2.3020'
+    })
+    expect(boardOddsForSide(fight, 'MERON')).toBe(2.302)
   })
 })
 

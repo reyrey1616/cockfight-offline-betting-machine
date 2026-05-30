@@ -1,12 +1,13 @@
 /**
  * Pure helpers for teller stake entry (no React).
- * Amounts are validated against API rules: > 0, ≤ 1_000_000, 2 decimal places.
+ * Amounts are validated against API rules: >= 100, ≤ 1_000_000, 2 decimal places.
  */
 export const TELLER_STAKE_QUICK_AMOUNTS = [
   100, 200, 300, 500, 1000, 5000, 10_000, 20_000
 ] as const
 
 const MAX_STAKE = 1_000_000
+const MIN_STAKE = 100
 
 /**
  * Allow only digits and one decimal point; at most two fractional digits;
@@ -41,7 +42,7 @@ export function parseStakeInput(raw: string): number | null {
   const t = raw.trim().replace(/,/g, '')
   if (t === '' || t === '.') return null
   const n = Number(t)
-  if (!Number.isFinite(n) || n <= 0) return null
+  if (!Number.isFinite(n) || n < MIN_STAKE) return null
   if (n > MAX_STAKE) return null
   return roundMoney(n)
 }
@@ -57,7 +58,7 @@ export function stakeToWireAmount(n: number): number {
 
 export function stakeValidationMessage(parsed: number | null): string | null {
   if (parsed === null) return 'Enter a valid amount.'
-  if (parsed <= 0) return 'Amount must be greater than zero.'
+  if (parsed < MIN_STAKE) return `Minimum stake is ${MIN_STAKE.toLocaleString()}.`
   if (parsed > MAX_STAKE) return `Maximum stake is ${MAX_STAKE.toLocaleString()}.`
   return null
 }

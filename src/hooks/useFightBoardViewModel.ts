@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 
 import { ApiError } from '@/lib/api'
 import {
+  boardOddsForSide,
   buildFightBoardTicker,
   deriveFightHistory,
   deriveSessionStats,
-  FIGHT_BOARD_HISTORY_FETCH_MAX
+  FIGHT_BOARD_HISTORY_FETCH_MAX,
+  isSideHeld
 } from '@/lib/fight-board-derive'
 import { useFightLiveState } from '@/hooks/useFightLiveState'
 import { useRecentFightsBoard } from '@/hooks/useRecentFightsBoard'
@@ -36,10 +38,8 @@ export function useFightBoardViewModel() {
 
   const tickerMessage = useMemo(() => buildFightBoardTicker(fight, null), [fight])
 
-  const meronSideHeld =
-    fight?.status === 'OPEN' && fight.meronAcceptingBets === false
-  const walaSideHeld =
-    fight?.status === 'OPEN' && fight.walaAcceptingBets === false
+  const meronSideHeld = isSideHeld(fight, 'MERON')
+  const walaSideHeld = isSideHeld(fight, 'WALA')
 
   return {
     fight,
@@ -54,8 +54,8 @@ export function useFightBoardViewModel() {
     tickerMessage,
     meronPool: fight?.meronPool ?? '0.00',
     walaPool: fight?.walaPool ?? '0.00',
-    meronOdds: fight?.meronOdds ?? null,
-    walaOdds: fight?.walaOdds ?? null,
+    meronOdds: boardOddsForSide(fight, 'MERON'),
+    walaOdds: boardOddsForSide(fight, 'WALA'),
     fightNumber: fight?.fightNumber ?? null,
     fightStatus: fight?.status ?? null,
     meronSideHeld,

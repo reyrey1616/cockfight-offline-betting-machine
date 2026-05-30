@@ -54,7 +54,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   /** Signed JWT. Pass as `Authorization: Bearer <token>` on every
-      protected request. 12-hour lifetime by default (server-configurable
+      protected request. 30-day lifetime by default (server-configurable
       via JWT_EXPIRES_IN). */
   token: string
   user: PublicUser
@@ -283,10 +283,10 @@ export interface ListSessionResetsResponse {
 // ===========================================================================
 
 /** `FightOutcome` on the wire — includes Prisma `CANCELLED` for legacy rows. */
-export type FightOutcomeWire = 'MERON' | 'WALA' | 'DRAW' | 'CANCELLED' | 'NO_CONTEST'
+export type FightOutcomeWire = 'MERON' | 'WALA' | 'DRAW' | 'CANCELLED'
 
 /** Body for `POST /fights/:id/settle` — fraction outcomes only (no `CANCELLED`). */
-export type SettleFightOutcome = 'MERON' | 'WALA' | 'DRAW' | 'NO_CONTEST'
+export type SettleFightOutcome = 'MERON' | 'WALA' | 'DRAW'
 
 export interface Fight {
   id: string

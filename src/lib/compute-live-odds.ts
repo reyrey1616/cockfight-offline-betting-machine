@@ -7,8 +7,17 @@ function toNumber(decimalLike: string | number | null | undefined): number {
   return Number(decimalLike)
 }
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100
+function floor2(n: number): number {
+  return Math.floor(n * 100) / 100
+}
+
+function poolDistributable(
+  meron: number,
+  wala: number,
+  commissionRate: number
+): number {
+  const total = meron + wala
+  return total * (1 - commissionRate / 2)
 }
 
 export function computeLiveOdds(fight: {
@@ -19,11 +28,10 @@ export function computeLiveOdds(fight: {
   const meron = toNumber(fight.meronPool)
   const wala = toNumber(fight.walaPool)
   const commission = toNumber(fight.commissionRate)
-  const keepRate = 1 - commission
+  const distributable = poolDistributable(meron, wala, commission)
 
-  const meronOdds =
-    meron > 0 ? round2(1 + (wala * keepRate) / meron) : null
-  const walaOdds = wala > 0 ? round2(1 + (meron * keepRate) / wala) : null
+  const meronOdds = meron > 0 ? floor2(distributable / meron) : null
+  const walaOdds = wala > 0 ? floor2(distributable / wala) : null
 
   return { meronOdds, walaOdds }
 }
