@@ -19,6 +19,7 @@ import { ApiError } from '@/lib/api'
 import type { Setting } from '@/types/api'
 
 import { SessionResetSection } from './SessionResetSection'
+import { AdminVoidBarcodeSection } from './AdminVoidBarcodeSection'
 
 const MAX_COMMISSION_PERCENT = 30
 const MIN_COMMISSION_PERCENT = 0
@@ -158,32 +159,36 @@ export function SettingsPage() {
         </p>
       </div>
 
-      <Card className="max-w-md">
-        <CardHeader>
-          <CardTitle>Commission rate</CardTitle>
-          <CardDescription>
-            Enter a whole or decimal percent between 0% and 30%. The server rounds to four
-            decimal places as a fraction (e.g. 12.5% → 0.1250).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isError ? (
-            <Alert variant="destructive">
-              <AlertTitle>Could not load settings</AlertTitle>
-              <AlertDescription>{loadMessage ?? 'Something went wrong.'}</AlertDescription>
-            </Alert>
-          ) : loadPending ? (
-            <p className="text-sm text-muted-foreground">Loading current rate…</p>
-          ) : setting ? (
-            <CommissionForm
-              key={`${setting.commissionRate}-${setting.updatedAt}`}
-              setting={setting}
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">No settings returned.</p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <Card className="max-w-md lg:max-w-none">
+          <CardHeader>
+            <CardTitle>Commission rate</CardTitle>
+            <CardDescription>
+              Enter a whole or decimal percent between 0% and 30%. The server rounds to four
+              decimal places as a fraction (e.g. 12.5% → 0.1250).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Could not load settings</AlertTitle>
+                <AlertDescription>{loadMessage ?? 'Something went wrong.'}</AlertDescription>
+              </Alert>
+            ) : loadPending ? (
+              <p className="text-sm text-muted-foreground">Loading current rate…</p>
+            ) : setting ? (
+              <CommissionForm
+                key={`${setting.commissionRate}-${setting.updatedAt}`}
+                setting={setting}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">No settings returned.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <AdminVoidBarcodeSection />
+      </div>
 
       <SessionResetSection />
     </div>

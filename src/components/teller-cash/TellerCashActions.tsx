@@ -56,7 +56,7 @@ export function TellerCashActions({ className, surface = 'default' }: TellerCash
       <TellerCashTransactionDialog
         kind={dialogKind}
         onClose={() => setDialogKind(null)}
-        onSuccess={async ({ kind, code, balance, collectorName, amount, notes }) => {
+        onSuccess={async ({ kind, code, balance, collectorName, amount, recordedAt, notes }) => {
           const label = kind === 'deposit' ? 'Deposit' : 'Remittance'
           let printed = false
           if (code) {
@@ -66,6 +66,7 @@ export function TellerCashActions({ className, surface = 'default' }: TellerCash
               amount,
               collectorName,
               tellerName: user?.fullName ?? '—',
+              recordedAt,
               notes
             })
           }

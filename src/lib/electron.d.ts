@@ -3,11 +3,14 @@ export interface KioskConfig {
   apiBaseUrl: string | null
 }
 
-/** Payload for 80mm thermal bet slip (Electron main process). */
+/** Payload for 80mm thermal bet slip — 76mm × 60mm (Electron main process). */
 export interface BetTicketPrintPayload {
   code: string
-  amount: string
+  fightNumber: string
+  bettingSide: string
+  betAmount: string
   tellerName: string
+  placedAt: string
   barcodePngDataUrl: string
 }
 
@@ -31,11 +34,23 @@ export interface CashSlipPrintPayload {
   amount: string
   collectorName: string
   tellerName: string
+  recordedAt: string
   notes?: string
   barcodePngDataUrl: string
 }
 
 export type CashSlipPrintResult = BetTicketPrintResult
+
+/** Payload for 80mm thermal payout receipt (Electron main process). */
+export interface PayoutReceiptPrintPayload {
+  fightNumber: string
+  bettingSide: string
+  betAmount: string
+  payoutAmount: string
+  paidAt: string
+}
+
+export type PayoutReceiptPrintResult = BetTicketPrintResult
 
 export interface DesktopConfigSummary {
   apiBaseUrl: string
@@ -48,6 +63,7 @@ export interface ElectronAPI {
   printBetTicket: (payload: BetTicketPrintPayload) => Promise<BetTicketPrintResult>
   printCollectorBadge: (payload: CollectorBadgePrintPayload) => Promise<CollectorBadgePrintResult>
   printCashSlip: (payload: CashSlipPrintPayload) => Promise<CashSlipPrintResult>
+  printPayoutReceipt: (payload: PayoutReceiptPrintPayload) => Promise<PayoutReceiptPrintResult>
   getDesktopConfig: () => Promise<DesktopConfigSummary>
 }
 

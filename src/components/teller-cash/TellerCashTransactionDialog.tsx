@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/lib/api'
+import {
+  isCompleteCollectorCode,
+  sanitizeCollectorCodeInput
+} from '@/lib/collector-scan'
 import { nativeModalDialogClassName } from '@/lib/nativeModalDialogClassName'
 import { parseStakeInput, sanitizeStakeInput } from '@/lib/teller-stake'
 import { cn } from '@/lib/utils'
 import { useCashAdvance, useCashRemit } from '@/hooks/useCash'
-import { useCollectorsList } from '@/hooks/useCollectors'
-import type { Collector } from '@/types/api'
+import { useCollectorByCode } from '@/hooks/useCollectors'
 
 export type CashTransactionKind = 'deposit' | 'remit'
 
@@ -23,6 +26,7 @@ export interface TellerCashTransactionDialogProps {
     balance: string
     collectorName: string
     amount: string
+    recordedAt: string
     notes?: string
   }) => void
 }
@@ -33,20 +37,22 @@ export function TellerCashTransactionDialog({
   onSuccess
 }: TellerCashTransactionDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [collectorId, setCollectorId] = useState('')
+  const scanInputRef = useRef<HTMLInputElement>(null)
+  const [collectorScan, setCollectorScan] = useState('')
   const [amount, setAmount] = useState('')
-  const [password, setPassword] = useState('')
   const [notes, setNotes] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
-  const collectorsQuery = useCollectorsList()
+  const collectorCode = sanitizeCollectorCodeInput(collectorScan)
+  const collectorLookup = useCollectorByCode(collectorScan)
   const advance = useCashAdvance()
   const remit = useCashRemit()
   const pending = advance.isPending || remit.isPending
 
   const open = kind != null
   const title = kind === 'deposit' ? 'Record deposit' : kind === 'remit' ? 'Record remittance' : ''
-  const collectors: Collector[] = collectorsQuery.data?.collectors ?? []
+  const resolvedCollector = collectorLookup.data?.collector
+  const scanComplete = isCompleteCollectorCode(collectorCode)
 
   useEffect(() => {
     const d = dialogRef.current
@@ -58,10 +64,18 @@ export function TellerCashTransactionDialog({
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open || pending) return
+    const t = window.setTimeout(() => {
+      scanInputRef.current?.focus()
+      scanInputRef.current?.select()
+    }, 0)
+    return () => window.clearTimeout(t)
+  }, [open, pending, kind])
+
   function resetForm() {
-    setCollectorId('')
+    setCollectorScan('')
     setAmount('')
-    setPassword('')
     setNotes('')
     setFormError(null)
   }
@@ -75,29 +89,39 @@ export function TellerCashTransactionDialog({
   function handleSubmit() {
     if (!kind) return
     const parsed = parseStakeInput(amount)
-    if (!collectorId) {
-      setFormError('Select a collector.')
+    if (!scanComplete) {
+      setFormError('Scan the collector badge barcode.')
+      return
+    }
+    if (collectorLookup.isFetching) {
+      setFormError('Looking up collector — wait a moment.')
+      return
+    }
+    if (collectorLookup.isError) {
+      setFormError(
+        collectorLookup.error instanceof ApiError
+          ? collectorLookup.error.message
+          : 'No collector matches that barcode.'
+      )
+      return
+    }
+    if (!resolvedCollector?.isActive) {
+      setFormError('That collector is not active.')
       return
     }
     if (parsed == null) {
       setFormError('Enter a valid amount greater than zero (max 2 decimal places).')
       return
     }
-    if (!password.trim()) {
-      setFormError('Enter your password to confirm.')
-      return
-    }
 
     setFormError(null)
     const notesTrimmed = notes.trim() || undefined
-    const passwordValue = password
-    const collector = collectors.find((c) => c.id === collectorId)
-    const collectorName = collector?.name ?? '—'
+    const collectorName = resolvedCollector.name
     const amountStr = parsed.toFixed(2)
 
     if (kind === 'deposit') {
       advance.mutate(
-        { collectorId, amount: parsed, password: passwordValue, notes: notesTrimmed },
+        { collectorCode, amount: parsed, notes: notesTrimmed },
         {
           onSuccess: (res) => {
             onSuccess?.({
@@ -106,6 +130,7 @@ export function TellerCashTransactionDialog({
               balance: res.actorBalance,
               collectorName,
               amount: amountStr,
+              recordedAt: res.ledgerEntry.createdAt,
               notes: notesTrimmed
             })
             handleClose()
@@ -119,7 +144,7 @@ export function TellerCashTransactionDialog({
     }
 
     remit.mutate(
-      { collectorId, amount: parsed, password: passwordValue, notes: notesTrimmed },
+      { collectorCode, amount: parsed, notes: notesTrimmed },
       {
         onSuccess: (res) => {
           onSuccess?.({
@@ -128,6 +153,7 @@ export function TellerCashTransactionDialog({
             balance: res.actorBalance,
             collectorName,
             amount: amountStr,
+            recordedAt: res.ledgerEntry.createdAt,
             notes: notesTrimmed
           })
           handleClose()
@@ -168,34 +194,46 @@ export function TellerCashTransactionDialog({
           handleSubmit()
         }}
       >
-        {collectorsQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertTitle>Could not load collectors</AlertTitle>
-            <AlertDescription>Try again in a moment.</AlertDescription>
-          </Alert>
-        ) : null}
-
         <div className="flex flex-col gap-2">
-          <Label htmlFor="cash-collector">Collector</Label>
-          <select
-            id="cash-collector"
-            name="collector-id"
+          <Label htmlFor="cash-collector-scan">Collector (scan badge)</Label>
+          <Input
+            ref={scanInputRef}
+            id="cash-collector-scan"
+            name="collector-scan"
+            type="text"
             autoComplete="off"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={collectorId}
-            disabled={pending || collectorsQuery.isPending}
+            spellCheck={false}
+            placeholder="Scan collector barcode"
+            value={collectorScan}
+            disabled={pending}
+            className="font-mono uppercase tracking-wide"
             onChange={(e) => {
               setFormError(null)
-              setCollectorId(e.target.value)
+              setCollectorScan(sanitizeCollectorCodeInput(e.target.value))
             }}
-          >
-            <option value="">Select collector…</option>
-            {collectors.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.code})
-              </option>
-            ))}
-          </select>
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Focus here and scan the collector badge. Press Enter if your scanner does not send it
+            automatically.
+          </p>
+          {scanComplete && collectorLookup.isFetching ? (
+            <p className="text-xs text-muted-foreground">Looking up collector…</p>
+          ) : null}
+          {scanComplete && resolvedCollector ? (
+            <p className="text-sm font-medium">
+              {resolvedCollector.name}
+              {!resolvedCollector.isActive ? (
+                <span className="ml-2 text-destructive">(inactive)</span>
+              ) : null}
+            </p>
+          ) : null}
+          {scanComplete && collectorLookup.isError ? (
+            <p className="text-xs text-destructive">
+              {collectorLookup.error instanceof ApiError
+                ? collectorLookup.error.message
+                : 'No collector matches that barcode.'}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-2">
@@ -219,24 +257,6 @@ export function TellerCashTransactionDialog({
           <p className="text-[11px] text-muted-foreground">
             Digits only (and one decimal for centavos). Letters and symbols are ignored.
           </p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="cash-confirm">Confirm with your password</Label>
-          <Input
-            id="cash-confirm"
-            name="cash-step-up"
-            type="password"
-            autoComplete="off"
-            data-lpignore="true"
-            data-1p-ignore
-            value={password}
-            disabled={pending}
-            onChange={(e) => {
-              setFormError(null)
-              setPassword(e.target.value)
-            }}
-          />
         </div>
 
         <div className="flex flex-col gap-2">

@@ -37,7 +37,7 @@ export async function placeBet(body: PlaceBetRequest): Promise<PlaceBetResponse>
   return data
 }
 
-/** POST /bets/:id/void — cancel a pending ticket while the fight is still OPEN. */
+/** POST /bets/:id/void — cancel a pending ticket (OPEN/LAST_CALL fight + admin barcode). */
 export async function voidBet(
   betId: string,
   body: VoidBetRequest = {}

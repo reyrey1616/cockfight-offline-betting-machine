@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -13,21 +13,38 @@ vi.mock('@/hooks/useCash', () => ({
   useCashRemit: () => ({ mutate: remitMutate, isPending: false })
 }))
 
+const collector = makeCollector({ id: 'col-1', name: 'Collector A', code: 'COLABCDE' })
+
 vi.mock('@/hooks/useCollectors', () => ({
-  useCollectorsList: () => ({
-    data: { collectors: [makeCollector({ id: 'col-1', name: 'Collector A', code: 'COL-A' })] },
-    isPending: false,
-    isError: false
-  })
+  useCollectorByCode: (rawCode: string) => {
+    const code = rawCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    if (code.length !== 8 || !code.startsWith('COL')) {
+      return { data: undefined, isFetching: false, isError: false, error: null }
+    }
+    if (code === collector.code) {
+      return {
+        data: { collector },
+        isFetching: false,
+        isError: false,
+        error: null
+      }
+    }
+    return {
+      data: undefined,
+      isFetching: false,
+      isError: true,
+      error: new Error('No collector matches that code')
+    }
+  }
 }))
 
 describe('TellerCashTransactionDialog', () => {
-  it('blocks submit when form is incomplete', async () => {
+  it('blocks submit when collector is not scanned', async () => {
     const user = userEvent.setup()
     render(<TellerCashTransactionDialog kind="deposit" onClose={vi.fn()} />)
 
     await user.click(screen.getByRole('button', { name: /record deposit/i }))
-    expect(screen.getByText(/select a collector/i)).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent(/scan the collector badge/i)
     expect(advanceMutate).not.toHaveBeenCalled()
   })
 
@@ -44,19 +61,19 @@ describe('TellerCashTransactionDialog', () => {
     const user = userEvent.setup()
     render(<TellerCashTransactionDialog kind="deposit" onClose={vi.fn()} />)
 
-    await user.selectOptions(screen.getByLabelText(/collector/i), 'col-1')
+    await user.type(screen.getByLabelText(/collector \(scan badge\)/i), collector.code)
     await user.type(screen.getByLabelText(/^amount$/i), '500')
-    await user.type(screen.getByLabelText(/confirm with your password/i), 'teller12345')
     await user.click(screen.getByRole('button', { name: /record deposit/i }))
 
-    expect(advanceMutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collectorId: 'col-1',
-        amount: 500,
-        password: 'teller12345'
-      }),
-      expect.any(Object)
-    )
+    await waitFor(() => {
+      expect(advanceMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collectorCode: collector.code,
+          amount: 500
+        }),
+        expect.any(Object)
+      )
+    })
     expect(remitMutate).not.toHaveBeenCalled()
   })
 
@@ -64,18 +81,18 @@ describe('TellerCashTransactionDialog', () => {
     const user = userEvent.setup()
     render(<TellerCashTransactionDialog kind="remit" onClose={vi.fn()} />)
 
-    await user.selectOptions(screen.getByLabelText(/collector/i), 'col-1')
+    await user.type(screen.getByLabelText(/collector \(scan badge\)/i), collector.code)
     await user.type(screen.getByLabelText(/^amount$/i), '100')
-    await user.type(screen.getByLabelText(/confirm with your password/i), 'teller12345')
     await user.click(screen.getByRole('button', { name: /record remittance/i }))
 
-    expect(remitMutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collectorId: 'col-1',
-        amount: 100,
-        password: 'teller12345'
-      }),
-      expect.any(Object)
-    )
+    await waitFor(() => {
+      expect(remitMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collectorCode: collector.code,
+          amount: 100
+        }),
+        expect.any(Object)
+      )
+    })
   })
 })

@@ -12,6 +12,7 @@ describe('TellerVoidBetDialog', () => {
         bet={null}
         fightNumber={1}
         pending={false}
+        authError={null}
         onClose={vi.fn()}
         onConfirm={vi.fn()}
       />
@@ -19,7 +20,7 @@ describe('TellerVoidBetDialog', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('shows ticket details and confirms with optional reason', async () => {
+  it('shows ticket details and confirms with admin password scan', async () => {
     const user = userEvent.setup()
     const onConfirm = vi.fn()
     const bet = makeBetRow({ code: 'TKT12345', side: 'WALA', amount: '150.00' })
@@ -29,6 +30,7 @@ describe('TellerVoidBetDialog', () => {
         bet={bet}
         fightNumber={7}
         pending={false}
+        authError={null}
         onClose={vi.fn()}
         onConfirm={onConfirm}
       />
@@ -38,9 +40,26 @@ describe('TellerVoidBetDialog', () => {
     expect(screen.getByText('TKT12345')).toBeInTheDocument()
     expect(screen.getByText(/fight #7/i)).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText(/reason/i), 'wrong side')
+    const adminInput = screen.getByLabelText(/admin authorization/i)
+
+    await user.type(adminInput, 'admin2026@')
     await user.click(screen.getByRole('button', { name: /cancel ticket/i }))
 
-    expect(onConfirm).toHaveBeenCalledWith('wrong side')
+    expect(onConfirm).toHaveBeenCalledWith('admin2026@')
+  })
+
+  it('shows auth error from failed admin scan', () => {
+    render(
+      <TellerVoidBetDialog
+        bet={makeBetRow()}
+        fightNumber={1}
+        pending={false}
+        authError="Admin authorization failed"
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText(/admin authorization failed/i)).toBeInTheDocument()
   })
 })

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/render-ticket-barcode', () => ({
-  ticketCodeToBarcodeDataUrl: () => 'data:image/png;base64,test'
+  cashSlipCodeToBarcodeDataUrl: () => 'data:image/png;base64,test'
 }))
 
 describe('printCashSlip', () => {
@@ -26,7 +26,8 @@ describe('printCashSlip', () => {
       code: 'ADV12345',
       amount: '500.00',
       collectorName: 'Collector A',
-      tellerName: 'Teller One'
+      tellerName: 'Teller One',
+      recordedAt: '2026-06-07T14:30:00.000Z'
     })
 
     expect(ok).toBe(true)

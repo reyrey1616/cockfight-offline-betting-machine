@@ -2,6 +2,7 @@ import { api } from '@/lib/api'
 import type {
   CreateCollectorRequest,
   CreateCollectorResponse,
+  GetCollectorByCodeResponse,
   ListCollectorsQuery,
   ListCollectorsResponse,
   UpdateCollectorRequest,
@@ -13,6 +14,12 @@ export async function listCollectors(
   params?: ListCollectorsQuery
 ): Promise<ListCollectorsResponse> {
   const { data } = await api.get<ListCollectorsResponse>('/collectors', { params })
+  return data
+}
+
+/** GET /collectors/code/:code — scan-by-barcode lookup. Hook: `useCollectorByCode`. */
+export async function getCollectorByCode(code: string): Promise<GetCollectorByCodeResponse> {
+  const { data } = await api.get<GetCollectorByCodeResponse>(`/collectors/code/${code}`)
   return data
 }
 

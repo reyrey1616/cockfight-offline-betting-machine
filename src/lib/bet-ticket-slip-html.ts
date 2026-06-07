@@ -1,7 +1,12 @@
-/** Fields printed on 80mm thermal slips (XP-K200L and similar). */
+import { THERMAL_SLIP_76X60_CSS } from '@/lib/thermal-slip-76x60-css'
+
+/** Fields printed on 80mm thermal bet slips (76mm × 60mm). */
 export interface BetTicketSlipFields {
-  amount: string
+  fightNumber: string
+  bettingSide: string
+  betAmount: string
   tellerName: string
+  placedAt: string
   barcodePngDataUrl: string
   code: string
 }
@@ -14,74 +19,15 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** Shared slip CSS — keep in sync with desktop `electron/print-bet-ticket.mjs`. */
-export const BET_TICKET_SLIP_CSS = `
-    @page { margin: 0; size: 80mm auto; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 2mm;
-      width: 80mm;
-      font-family: system-ui, -apple-system, sans-serif;
-      color: #000;
-      background: #fff;
-    }
-    .slip {
-      width: 76mm;
-      height: 76mm;
-      margin: 0 auto;
-      border: 2px solid #000;
-      padding: 2mm;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 1.5mm;
-    }
-    .barcode-wrap {
-      flex: 1 1 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 0;
-      padding: 1mm 0;
-    }
-    .barcode {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      max-height: 100%;
-      height: auto;
-      object-fit: contain;
-    }
-    .meta {
-      flex: 0 0 auto;
-      width: 100%;
-      padding: 0 1mm 0.5mm;
-    }
-    .line {
-      margin: 0;
-      font-size: 9px;
-      line-height: 1.35;
-      text-align: left;
-      word-break: break-word;
-    }
-    .line + .line { margin-top: 1mm; }
-    .label {
-      font-weight: 700;
-      text-transform: none;
-    }
-    .value {
-      font-size: 10px;
-      font-weight: 600;
-    }
-`
+/** Keep in sync with desktop `electron/print-bet-ticket.mjs`. */
+export const BET_TICKET_SLIP_CSS = THERMAL_SLIP_76X60_CSS
 
-/**
- * Minimal square ticket for 80mm thermal receipt printers.
- */
 export function buildBetTicketSlipHtml(fields: BetTicketSlipFields): string {
+  const fightNumber = escapeHtml(fields.fightNumber)
+  const bettingSide = escapeHtml(fields.bettingSide)
+  const betAmount = escapeHtml(fields.betAmount)
   const teller = escapeHtml(fields.tellerName.trim() || '—')
-  const amount = escapeHtml(fields.amount)
+  const placedAt = escapeHtml(fields.placedAt)
   const code = escapeHtml(fields.code)
 
   return `<!DOCTYPE html>
@@ -97,8 +43,11 @@ export function buildBetTicketSlipHtml(fields: BetTicketSlipFields): string {
       <img class="barcode" src="${fields.barcodePngDataUrl}" alt="${code}" />
     </div>
     <div class="meta">
-      <p class="line"><span class="label">Bet amount:</span> <span class="value">${amount}</span></p>
+      <p class="line"><span class="label">Fight #:</span> <span class="value">${fightNumber}</span></p>
+      <p class="line"><span class="label">Betting side:</span> <span class="value">${bettingSide}</span></p>
+      <p class="line"><span class="label">Bet amount:</span> <span class="value emphasis">${betAmount}</span></p>
       <p class="line"><span class="label">Teller:</span> <span class="value">${teller}</span></p>
+      <p class="line"><span class="label">Date and timestamp:</span> <span class="value">${placedAt}</span></p>
     </div>
   </div>
 </body>

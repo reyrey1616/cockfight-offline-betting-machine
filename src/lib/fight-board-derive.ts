@@ -99,8 +99,8 @@ export function deriveFightHistory(
 
 /**
  * Payout multiplier display on the board / payout desk:
- * - always 3 decimals
- * - truncates (floors) excess decimals instead of rounding
+ * - floor to 3 decimal places internally
+ * - show as integer without decimal point (1.64 → "164")
  */
 
 /** True when the fight is OPEN and admin has held a side (no new bets on that side). */
@@ -114,7 +114,8 @@ export function isSideHeld(
 
 export function formatBoardOdds(odds: number | null): string {
   if (odds == null || !Number.isFinite(odds)) return '—'
-  return floorToDecimals(odds, 3).toFixed(3)
+  const floored = floorToDecimals(odds, 3)
+  return String(Math.floor(floored * 100))
 }
 
 /** Settled fight payout multiplier from API decimal string. */

@@ -152,6 +152,10 @@ export interface Collector {
 }
 
 /** `POST /collectors` body — only `name`; server normalizes whitespace. */
+export interface GetCollectorByCodeResponse {
+  collector: Collector
+}
+
 export interface CreateCollectorRequest {
   name: string
 }
@@ -201,6 +205,12 @@ export interface UpdateSettingsRequest {
 
 export interface UpdateSettingsResponse {
   setting: Setting
+}
+
+/** `GET /settings/admin-void-barcode` — admin only; barcode encodes `barcodeValue`. */
+export interface AdminVoidBarcodeResponse {
+  username: string
+  barcodeValue: string
 }
 
 // ===========================================================================
@@ -471,6 +481,7 @@ export interface PayBetResponse {
 }
 
 export interface VoidBetRequest {
+  adminPassword: string
   reason?: string
 }
 
@@ -531,17 +542,15 @@ export interface ListLedgerResponse {
 export interface CashAdvanceRequest {
   /** ADMIN only — omit when teller records own deposit. */
   tellerId?: string
-  collectorId: string
+  collectorCode: string
   amount: number
   notes?: string
-  password: string
 }
 
 export interface CashRemitRequest {
-  collectorId: string
+  collectorCode: string
   amount: number
   notes?: string
-  password: string
 }
 
 export interface CashMutationResponse {

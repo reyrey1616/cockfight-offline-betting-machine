@@ -82,9 +82,10 @@ describe('deriveFightHistory', () => {
 })
 
 describe('formatBoardOdds', () => {
-  it('formats odds with three decimals using floor truncation', () => {
-    expect(formatBoardOdds(1.7259)).toBe('1.725')
-    expect(formatBoardOdds(1.2)).toBe('1.200')
+  it('formats odds as integer without decimal point (floor × 100)', () => {
+    expect(formatBoardOdds(1.64)).toBe('164')
+    expect(formatBoardOdds(1.7259)).toBe('172')
+    expect(formatBoardOdds(1.2)).toBe('120')
     expect(formatBoardOdds(null)).toBe('—')
   })
 })

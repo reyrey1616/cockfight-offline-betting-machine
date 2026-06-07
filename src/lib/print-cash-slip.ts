@@ -1,6 +1,7 @@
 import { buildCashSlipHtml } from '@/lib/cash-slip-html'
 import { formatMoney } from '@/lib/format-money'
-import { ticketCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
+import { cashSlipCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
+import { formatSlipTimestamp } from '@/lib/thermal-slip-76x60-css'
 
 export interface CashSlipPrintInput {
   kind: 'deposit' | 'remit'
@@ -8,6 +9,7 @@ export interface CashSlipPrintInput {
   amount: string | number
   collectorName: string
   tellerName: string
+  recordedAt: string
   notes?: string
 }
 
@@ -20,8 +22,9 @@ function buildSlipFields(input: CashSlipPrintInput) {
     amount: formatMoney(String(abs.toFixed(2))),
     collectorName: input.collectorName,
     tellerName: input.tellerName,
+    recordedAt: formatSlipTimestamp(input.recordedAt),
     notes: input.notes,
-    barcodePngDataUrl: ticketCodeToBarcodeDataUrl(input.code)
+    barcodePngDataUrl: cashSlipCodeToBarcodeDataUrl(input.code)
   }
 }
 

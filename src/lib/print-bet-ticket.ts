@@ -1,21 +1,49 @@
 import { buildBetTicketSlipHtml } from '@/lib/bet-ticket-slip-html'
+import { BET_SIDE_LABEL } from '@/constants'
 import { formatMoney } from '@/lib/format-money'
+import { formatSlipTimestamp } from '@/lib/thermal-slip-76x60-css'
 import { ticketCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
-import type { PlaceBetResponse } from '@/types/api'
+import type { BetRow, Fight, PlaceBetFightSummary, PlaceBetResponse } from '@/types/api'
 
 export interface BetTicketPrintInput {
   response: PlaceBetResponse
   tellerName?: string | null
 }
 
-function buildSlipFields(input: BetTicketPrintInput) {
-  const { bet } = input.response
+export interface BetTicketReprintInput {
+  bet: BetRow
+  fightNumber: number
+  tellerName?: string | null
+}
+
+function buildSlipFieldsFromBet(
+  bet: Pick<BetRow, 'code' | 'side' | 'amount' | 'createdAt' | 'tellerNameSnapshot'>,
+  fightNumber: number,
+  tellerName?: string | null
+) {
   return {
     code: bet.code,
-    amount: formatMoney(bet.amount),
-    tellerName: input.tellerName ?? bet.tellerNameSnapshot ?? '—',
+    fightNumber: String(fightNumber),
+    bettingSide: BET_SIDE_LABEL[bet.side],
+    betAmount: formatMoney(bet.amount),
+    tellerName: tellerName ?? bet.tellerNameSnapshot ?? '—',
+    placedAt: formatSlipTimestamp(bet.createdAt),
     barcodePngDataUrl: ticketCodeToBarcodeDataUrl(bet.code)
   }
+}
+
+function buildSlipFields(input: BetTicketPrintInput) {
+  const { bet, fight } = input.response
+  return buildSlipFieldsFromBet(bet, fight.fightNumber, input.tellerName)
+}
+
+async function sendSlipToPrinter(fields: ReturnType<typeof buildSlipFieldsFromBet>): Promise<boolean> {
+  const api = window.electronAPI
+  if (api?.isElectron) {
+    const result = await api.printBetTicket(fields)
+    return result.ok
+  }
+  return printViaBrowserWindow(fields)
 }
 
 /**
@@ -55,11 +83,12 @@ function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFields>): bool
  * Print a bet slip after placement. Uses Electron silent print when available.
  */
 export async function printBetTicket(input: BetTicketPrintInput): Promise<boolean> {
-  const fields = buildSlipFields(input)
-  const api = window.electronAPI
-  if (api?.isElectron) {
-    const result = await api.printBetTicket(fields)
-    return result.ok
-  }
-  return printViaBrowserWindow(fields)
+  return sendSlipToPrinter(buildSlipFields(input))
+}
+
+/** Reprint a slip from betting history (same layout as original placement). */
+export async function reprintBetTicket(input: BetTicketReprintInput): Promise<boolean> {
+  return sendSlipToPrinter(
+    buildSlipFieldsFromBet(input.bet, input.fightNumber, input.tellerName)
+  )
 }

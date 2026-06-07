@@ -1,8 +1,11 @@
-import type { BetRow, Fight } from '@/types/api'
+import type { BetRow, Fight, PlaceBetFightSummary } from '@/types/api'
 
 export interface BetVoidEligibilityInput {
   bet: Pick<BetRow, 'status'>
-  fight: Pick<Fight, 'status'> | null
+  fight:
+    | Pick<Fight, 'status' | 'id' | 'fightNumber'>
+    | Pick<PlaceBetFightSummary, 'status' | 'id' | 'fightNumber'>
+    | null
 }
 
 export interface BetVoidEligibility {
@@ -64,4 +67,32 @@ export function getBetVoidEligibility({
   }
 
   return { canVoid: true, blockReason: null }
+}
+
+export function getBetVoidEligibilityForTeller({
+  bet,
+  fight,
+  tellerId,
+  currentFight = null
+}: BetVoidEligibilityInput & {
+  bet: Pick<BetRow, 'status' | 'tellerId'>
+  tellerId: string | null
+  /** When set (teller kiosk board), only tickets on this fight may be voided. */
+  currentFight?: Pick<Fight, 'id' | 'fightNumber'> | null
+}): BetVoidEligibility {
+  if (tellerId && bet.tellerId !== tellerId) {
+    return {
+      canVoid: false,
+      blockReason: 'This ticket is not bet on this teller.'
+    }
+  }
+
+  if (currentFight && fight && fight.id !== currentFight.id) {
+    return {
+      canVoid: false,
+      blockReason: `This ticket is on fight #${fight.fightNumber}. Only tickets for fight #${currentFight.fightNumber} can be cancelled on this board.`
+    }
+  }
+
+  return getBetVoidEligibility({ bet, fight })
 }

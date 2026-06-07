@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { TellerBettingHistory } from '@/components/teller-betting/TellerBettingHistory'
-import { makeBetRow, makeFight } from '@/test/fixtures'
-import { renderWithProviders } from '@/test/render'
+import { makeBetRow, makeFight, tellerUser } from '@/test/fixtures'
+import { renderWithProviders, seedAuth } from '@/test/render'
 
 const voidMutate = vi.fn()
 
 vi.mock('@/lib/api-bets', () => ({
-  listBets: vi.fn()
+  listBets: vi.fn(),
+  getBetByCode: vi.fn()
 }))
 
 vi.mock('@/hooks/useVoidBet', () => ({
@@ -23,9 +24,28 @@ vi.mock('@/hooks/useCash', () => ({
   useSetCashBalance: () => vi.fn()
 }))
 
-import { listBets } from '@/lib/api-bets'
+const reprintBetTicket = vi.fn()
+
+vi.mock('@/lib/print-bet-ticket', () => ({
+  reprintBetTicket: (...args: unknown[]) => reprintBetTicket(...args)
+}))
+
+import { getBetByCode, listBets } from '@/lib/api-bets'
 
 const mockListBets = vi.mocked(listBets)
+const mockGetBetByCode = vi.mocked(getBetByCode)
+
+const openFightSummary = {
+  id: 'fight-1',
+  fightNumber: 7,
+  status: 'OPEN' as const,
+  meronPool: '0',
+  walaPool: '0',
+  meronOdds: null,
+  walaOdds: null,
+  payoutRatioMeron: null,
+  payoutRatioWala: null
+}
 
 describe('TellerBettingHistory', () => {
   it('shows empty state for fight with no tickets', async () => {
@@ -50,31 +70,70 @@ describe('TellerBettingHistory', () => {
     expect(screen.getByText(/250\.00/)).toBeInTheDocument()
   })
 
-  it('enables cancel for pending bet on open fight', async () => {
+  it('opens admin auth dialog after scanning a cancellable ticket', async () => {
     const user = userEvent.setup()
     mockListBets.mockResolvedValue({
       bets: [makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
       nextCursor: null
     })
+    mockGetBetByCode.mockResolvedValue({
+      bet: makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING', tellerId: tellerUser.id }),
+      fight: openFightSummary
+    })
 
+    seedAuth(tellerUser)
     renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'OPEN' })} />)
 
-    const cancelBtn = await screen.findByRole('button', { name: 'Cancel' })
-    expect(cancelBtn).toBeEnabled()
+    await screen.findByText('TKT99999')
+    const scanInput = screen.getByLabelText(/cancel ticket/i)
+    await user.type(scanInput, 'tkt99999')
 
-    await user.click(cancelBtn)
-    expect(screen.getByRole('heading', { name: /cancel ticket/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /cancel ticket/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/admin authorization/i)).toBeInTheDocument()
+  })
 
+  it('voids ticket after admin barcode scan', async () => {
+    const user = userEvent.setup()
+    mockListBets.mockResolvedValue({
+      bets: [makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
+      nextCursor: null
+    })
+    mockGetBetByCode.mockResolvedValue({
+      bet: makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING', tellerId: tellerUser.id }),
+      fight: openFightSummary
+    })
+
+    seedAuth(tellerUser)
+    renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'OPEN' })} />)
+
+    await user.type(screen.getByLabelText(/cancel ticket/i), 'TKT99999')
+    await screen.findByRole('heading', { name: /cancel ticket/i })
+
+    await user.type(screen.getByLabelText(/admin authorization/i), 'admin2026@')
     await user.click(screen.getByRole('button', { name: /^cancel ticket$/i }))
+
     await waitFor(() => {
       expect(voidMutate).toHaveBeenCalledWith(
-        { betId: 'bet-void-1', body: {} },
+        { betId: 'bet-void-1', body: { adminPassword: 'admin2026@' } },
         expect.any(Object)
       )
     })
   })
 
-  it('omits cancel action when fight is closed', async () => {
+  it('does not show per-row cancel buttons', async () => {
+    mockListBets.mockResolvedValue({
+      bets: [makeBetRow({ status: 'PENDING' })],
+      nextCursor: null
+    })
+
+    renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'OPEN' })} />)
+
+    await screen.findByText(/pending/i)
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/cancel ticket/i)).toBeInTheDocument()
+  })
+
+  it('shows scan input when fight is closed', async () => {
     mockListBets.mockResolvedValue({
       bets: [makeBetRow({ status: 'PENDING' })],
       nextCursor: null
@@ -83,31 +142,26 @@ describe('TellerBettingHistory', () => {
     renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'CLOSED' })} />)
 
     await screen.findByText(/pending/i)
-    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('columnheader', { name: 'Action' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/cancel ticket/i)).toBeInTheDocument()
   })
 
-  it('leaves action cell empty when cancel is not allowed', async () => {
-    mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ status: 'VOIDED' })],
-      nextCursor: null
+  it('reprints a ticket from history', async () => {
+    const user = userEvent.setup()
+    reprintBetTicket.mockResolvedValue(true)
+    const bet = makeBetRow({ id: 'bet-reprint', code: 'TKT00001' })
+    mockListBets.mockResolvedValue({ bets: [bet], nextCursor: null })
+
+    seedAuth(tellerUser)
+    renderWithProviders(<TellerBettingHistory fight={makeFight({ fightNumber: 9 })} />)
+
+    await user.click(await screen.findByRole('button', { name: 'Reprint' }))
+
+    await waitFor(() => {
+      expect(reprintBetTicket).toHaveBeenCalledWith({
+        bet,
+        fightNumber: 9,
+        tellerName: tellerUser.fullName
+      })
     })
-
-    renderWithProviders(<TellerBettingHistory fight={makeFight()} />)
-
-    await screen.findByText(/voided/i)
-    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
-  })
-
-  it('shows action header when open fight has cancellable tickets', async () => {
-    mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ status: 'PENDING' })],
-      nextCursor: null
-    })
-
-    renderWithProviders(<TellerBettingHistory fight={makeFight({ status: 'OPEN' })} />)
-
-    expect(await screen.findByRole('columnheader', { name: 'Action' })).toBeInTheDocument()
-    expect(screen.getByText(/pending tickets can be cancelled/i)).toBeInTheDocument()
   })
 })

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, ipcMain } from 'electron'
 
 import { clientDistDir, loadDesktopConfig } from './config.mjs'
+import { printPayoutReceipt } from './print-payout-receipt.mjs'
 import { printBetTicket } from './print-bet-ticket.mjs'
 import { printCashSlip } from './print-cash-slip.mjs'
 import { printCollectorBadge } from './print-collector-badge.mjs'
@@ -88,6 +89,12 @@ app.whenReady().then(() => {
     if (!mainWindow) return { ok: false, error: 'No window' }
     const config = loadDesktopConfig()
     return printCashSlip(mainWindow, payload, config)
+  })
+
+  ipcMain.handle('print-payout-receipt', async (_evt, payload) => {
+    if (!mainWindow) return { ok: false, error: 'No window' }
+    const config = loadDesktopConfig()
+    return printPayoutReceipt(mainWindow, payload, config)
   })
 
   return createWindow()

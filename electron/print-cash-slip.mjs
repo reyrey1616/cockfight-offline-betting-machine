@@ -14,58 +14,60 @@ const CASH_SLIP_CSS = `
     }
     .slip {
       width: 76mm;
-      height: 76mm;
+      height: 40mm;
       margin: 0 auto;
       border: 2px solid #000;
-      padding: 2mm;
+      padding: 1.5mm 2mm 1mm;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      gap: 1.5mm;
+      gap: 0;
+      overflow: hidden;
     }
     .title {
       flex: 0 0 auto;
-      margin: 0;
-      font-size: 10px;
+      margin: 0 0 1mm;
+      font-size: 8px;
       font-weight: 800;
       text-align: center;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      line-height: 1.2;
     }
     .barcode-wrap {
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 0;
-      padding: 1mm 0;
+      max-height: 11mm;
+      padding: 0.25mm 0;
     }
     .barcode {
       display: block;
       width: 100%;
       max-width: 100%;
-      max-height: 100%;
+      max-height: 11mm;
       height: auto;
       object-fit: contain;
     }
     .meta {
       flex: 0 0 auto;
       width: 100%;
-      padding: 0 1mm 0.5mm;
+      padding: 0;
     }
     .line {
       margin: 0;
-      font-size: 9px;
-      line-height: 1.35;
+      font-size: 7.5px;
+      line-height: 1.25;
       text-align: left;
       word-break: break-word;
     }
-    .line + .line { margin-top: 1mm; }
+    .line + .line { margin-top: 0.5mm; }
     .label { font-weight: 700; }
-    .value { font-size: 10px; font-weight: 600; }
+    .value { font-size: 8px; font-weight: 600; }
     .code-value {
       font-family: ui-monospace, monospace;
-      font-size: 11px;
+      font-size: 8px;
       font-weight: 700;
       letter-spacing: 0.06em;
     }
@@ -85,6 +87,7 @@ function buildCashSlipHtml(fields) {
   const teller = escapeHtml(String(fields.tellerName || '').trim() || '—')
   const amount = escapeHtml(fields.amount)
   const code = escapeHtml(fields.code)
+  const recordedAt = escapeHtml(String(fields.recordedAt || '—'))
   const notesLine = fields.notes?.trim()
     ? `<p class="line"><span class="label">Notes:</span> <span class="value">${escapeHtml(fields.notes.trim())}</span></p>`
     : ''
@@ -107,6 +110,7 @@ function buildCashSlipHtml(fields) {
       <p class="line"><span class="label">Collector:</span> <span class="value">${collector}</span></p>
       <p class="line"><span class="label">Teller:</span> <span class="value">${teller}</span></p>
       <p class="line"><span class="label">Receipt:</span> <span class="value code-value">${code}</span></p>
+      <p class="line"><span class="label">Date and timestamp:</span> <span class="value">${recordedAt}</span></p>
       ${notesLine}
     </div>
   </div>
@@ -116,7 +120,7 @@ function buildCashSlipHtml(fields) {
 
 /**
  * @param {import('electron').BrowserWindow} parentWin
- * @param {{ kind: 'deposit'|'remit', code: string, amount: string, collectorName: string, tellerName: string, notes?: string, barcodePngDataUrl: string }} slip
+ * @param {{ kind: 'deposit'|'remit', code: string, amount: string, collectorName: string, tellerName: string, recordedAt: string, notes?: string, barcodePngDataUrl: string }} slip
  * @param {{ printerName?: string, silentPrint?: boolean }} config
  */
 export async function printCashSlip(parentWin, slip, config) {

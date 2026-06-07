@@ -13,19 +13,22 @@ export interface TellerVoidBetDialogProps {
   bet: BetRow | null
   fightNumber: number | null
   pending: boolean
+  authError: string | null
   onClose: () => void
-  onConfirm: (reason: string | undefined) => void
+  onConfirm: (adminPassword: string) => void
 }
 
 export function TellerVoidBetDialog({
   bet,
   fightNumber,
   pending,
+  authError,
   onClose,
   onConfirm
 }: TellerVoidBetDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [reason, setReason] = useState('')
+  const adminInputRef = useRef<HTMLInputElement>(null)
+  const [adminPassword, setAdminPassword] = useState('')
 
   const open = bet != null
 
@@ -40,12 +43,25 @@ export function TellerVoidBetDialog({
   }, [open])
 
   useEffect(() => {
-    if (open) setReason('')
+    if (!open) return
+    setAdminPassword('')
+    requestAnimationFrame(() => {
+      adminInputRef.current?.focus()
+      adminInputRef.current?.select()
+    })
   }, [open, bet?.id])
+
+  useEffect(() => {
+    if (!open || !authError) return
+    setAdminPassword('')
+    requestAnimationFrame(() => {
+      adminInputRef.current?.focus()
+    })
+  }, [authError, open])
 
   function handleClose() {
     if (pending) return
-    setReason('')
+    setAdminPassword('')
     onClose()
   }
 
@@ -67,8 +83,8 @@ export function TellerVoidBetDialog({
         <h2 className="text-lg font-semibold">Cancel ticket?</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {fightNumber != null
-            ? `Void ${bet.code} on fight #${fightNumber}. Cash returns to your drawer; pools and odds update.`
-            : `Void ${bet.code}. Cash returns to your drawer.`}
+            ? `Void ${bet.code} on fight #${fightNumber}. Scan the admin void barcode to authorize.`
+            : `Void ${bet.code}. Scan the admin void barcode to authorize.`}
         </p>
       </div>
 
@@ -77,7 +93,8 @@ export function TellerVoidBetDialog({
         autoComplete="off"
         onSubmit={(e) => {
           e.preventDefault()
-          if (!pending) onConfirm(reason.trim() || undefined)
+          if (pending || !adminPassword.trim()) return
+          onConfirm(adminPassword)
         }}
       >
         <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
@@ -96,24 +113,29 @@ export function TellerVoidBetDialog({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="void-reason">Reason (optional)</Label>
+          <Label htmlFor="void-admin-password">Admin authorization</Label>
           <Input
-            id="void-reason"
-            type="text"
-            maxLength={200}
+            ref={adminInputRef}
+            id="void-admin-password"
+            type="password"
             autoComplete="off"
             disabled={pending}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. wrong amount, customer changed mind"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            placeholder="Scan admin void barcode"
           />
+          <p className="text-xs text-muted-foreground">
+            Focus here and scan the admin barcode from Settings. Press Enter if your scanner does
+            not submit automatically.
+          </p>
+          {authError ? <p className="text-sm text-destructive">{authError}</p> : null}
         </div>
 
         <div className="-mx-4 flex justify-end gap-2 border-t px-4 pt-3">
           <Button type="button" variant="outline" disabled={pending} onClick={handleClose}>
             Keep ticket
           </Button>
-          <Button type="submit" variant="destructive" disabled={pending}>
+          <Button type="submit" variant="destructive" disabled={pending || !adminPassword.trim()}>
             {pending ? 'Cancelling…' : 'Cancel ticket'}
           </Button>
         </div>

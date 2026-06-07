@@ -11,7 +11,7 @@ import {
   type FightBoardSessionStats
 } from '@/lib/fight-board-derive'
 import type { FightStatusValue } from '@/constants'
-
+import clsx from 'clsx'
 export interface FightBoardLayoutProps {
   meronPool: string
   walaPool: string
@@ -225,7 +225,9 @@ export function FightBoardLayout({
               Total bets
             </div>
             <div className="flex flex-1 flex-col items-center justify-center px-2 py-6">
-              <p className="text-4xl font-black tabular-nums tracking-tight lg:text-5xl">
+              <p className={clsx("text-[64px] font-black tabular-nums tracking-tight",
+                meronPool.length >=6 && "text-[48px]!"
+              )}>
                 {formatMoney(meronPool)}
               </p>
               <div
@@ -368,7 +370,9 @@ export function FightBoardLayout({
               Total bets
             </div>
             <div className="flex flex-1 flex-col items-center justify-center px-2 py-6">
-              <p className="text-4xl font-black tabular-nums tracking-tight lg:text-5xl">
+              <p className={clsx("text-[64px] font-black tabular-nums tracking-tight",
+                walaPool.length >=6 && "!text-[48px]"
+              )}>
                 {formatMoney(walaPool)}
               </p>
               <div

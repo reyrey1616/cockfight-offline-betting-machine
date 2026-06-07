@@ -1,5 +1,10 @@
 import { api } from '@/lib/api'
-import type { GetSettingsResponse, UpdateSettingsRequest, UpdateSettingsResponse } from '@/types/api'
+import type {
+  AdminVoidBarcodeResponse,
+  GetSettingsResponse,
+  UpdateSettingsRequest,
+  UpdateSettingsResponse
+} from '@/types/api'
 
 /** GET /settings — any authenticated user. Hook: `useSettings`. */
 export async function getSettings(): Promise<GetSettingsResponse> {
@@ -12,5 +17,11 @@ export async function updateSettings(
   body: UpdateSettingsRequest
 ): Promise<UpdateSettingsResponse> {
   const { data } = await api.patch<UpdateSettingsResponse>('/settings', body)
+  return data
+}
+
+/** GET /settings/admin-void-barcode — admin only. Hook: `useAdminVoidBarcode`. */
+export async function getAdminVoidBarcode(): Promise<AdminVoidBarcodeResponse> {
+  const { data } = await api.get<AdminVoidBarcodeResponse>('/settings/admin-void-barcode')
   return data
 }

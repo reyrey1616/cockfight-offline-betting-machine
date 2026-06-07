@@ -84,26 +84,21 @@ export function PayoutMachinePage() {
     if (lookupPending || lookupInFlightRef.current === normalized) return
     lookupInFlightRef.current = normalized
 
-    let refocusScanner = true
     setLookupPending(true)
     try {
       const { bet, fight } = await getBetByCode(normalized)
       if (actor && bet.tellerId !== actor.id) {
-        refocusScanner = false
         setDialogMessage('This ticket is not bet on this teller.')
         return
       }
       if (isPayableWin(bet, fight)) {
-        refocusScanner = false
         errorDialogRef.current?.close()
         setDialogMessage(null)
         setPayable({ bet, fight })
       } else {
-        refocusScanner = false
         setDialogMessage(disqualificationMessage(bet, fight))
       }
     } catch (e) {
-      refocusScanner = false
       if (e instanceof ApiError && e.status === 404) {
         setDialogMessage('No bet found for this code.')
       } else {
@@ -114,9 +109,6 @@ export function PayoutMachinePage() {
       lookupInFlightRef.current = null
       setLookupPending(false)
       setScanValue('')
-      if (refocusScanner) {
-        focusScanner()
-      }
     }
   }
 
@@ -249,7 +241,7 @@ export function PayoutMachinePage() {
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pay customer</p>
               <p
-                className="mt-2 text-6xl font-black tabular-nums leading-none tracking-tight text-green-700 dark:text-green-400 sm:text-7xl"
+                className="mt-2 text-5xl font-black tabular-nums leading-none tracking-tight text-green-700 dark:text-green-400 sm:text-6xl"
                 aria-live="polite"
               >
                 {payoutAmountDisplay}
@@ -274,13 +266,13 @@ export function PayoutMachinePage() {
               </DetailLine>
             </div>
 
-            <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-              <form method="dialog">
-                <Button type="submit" variant="outline" disabled={payPending}>
-                  Cancel
-                </Button>
-              </form>
-              <Button type="button" disabled={payPending} onClick={() => void handleConfirmPaid()}>
+            <div className="flex justify-end border-t pt-4">
+              <Button
+                type="button"
+                className="min-w-[8rem]"
+                disabled={payPending}
+                onClick={() => void handleConfirmPaid()}
+              >
                 {payPending ? 'Recording…' : 'Paid'}
               </Button>
             </div>
