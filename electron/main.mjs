@@ -82,10 +82,21 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('print-bet-ticket', async (_evt, payload) => {
+  ipcMain.handle('print-bet-ticket', (_evt, payload) => {
     if (!mainWindow) return { ok: false, error: 'No window' }
     const config = loadDesktopConfig()
-    return printBetTicket(mainWindow, payload, config)
+    const win = mainWindow
+    // Do not await — a hung driver must not block the teller UI or the IPC queue.
+    void printBetTicket(win, payload, config).then((result) => {
+      if (!result.ok) {
+        const error = result.error ?? 'Print failed'
+        console.warn('[print-bet-ticket]', error)
+        if (!win.isDestroyed()) {
+          win.webContents.send('bet-ticket-print-failed', error)
+        }
+      }
+    })
+    return { ok: true }
   })
 
   ipcMain.handle('print-collector-badge', async (_evt, payload) => {

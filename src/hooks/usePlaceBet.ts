@@ -55,17 +55,17 @@ export function usePlaceBet(options?: UsePlaceBetOptions) {
 
       if (!printTicket || data.replay) return
 
-      const printed = await printBetTicket({
+      // Electron: IPC returns immediately; print runs in main (see main.mjs).
+      void printBetTicket({
         response: data,
         tellerName: user?.fullName
+      }).then((printed) => {
+        if (!printed && !window.electronAPI?.isElectron) {
+          toast.error(
+            'Could not open print window. Allow pop-ups or use the Electron kiosk app.'
+          )
+        }
       })
-      if (!printed) {
-        toast.error(
-          window.electronAPI?.isElectron
-            ? 'Ticket print failed. Check printer name in desktop config.json.'
-            : 'Could not open print window. Allow pop-ups or use the Electron kiosk app.'
-        )
-      }
     }
   })
 }

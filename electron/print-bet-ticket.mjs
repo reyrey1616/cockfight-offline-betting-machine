@@ -1,4 +1,4 @@
-import { printHtmlSlip } from './print-html-slip.mjs'
+import { BET_SLIP_PAGE_HEIGHT_MM, printHtmlSlip } from './print-html-slip.mjs'
 
 /** Inlined from machine-client `thermal-slip-76x60-css.ts` — keep in sync. */
 const THERMAL_SLIP_76X60_CSS = `
@@ -138,5 +138,8 @@ function buildTicketHtml(fields) {
  * @param {{ printerName?: string, silentPrint?: boolean }} config
  */
 export async function printBetTicket(parentWin, ticket, config) {
-  return printHtmlSlip(parentWin, buildTicketHtml(ticket), config)
+  return printHtmlSlip(parentWin, buildTicketHtml(ticket), {
+    ...config,
+    pageHeightMm: BET_SLIP_PAGE_HEIGHT_MM
+  })
 }
