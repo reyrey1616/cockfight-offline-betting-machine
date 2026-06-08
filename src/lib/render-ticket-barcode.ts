@@ -5,8 +5,8 @@ export function ticketCodeToBarcodeDataUrl(code: string): string {
   const canvas = document.createElement('canvas')
   JsBarcode(canvas, code, {
     format: 'CODE128',
-    width: 3.2,
-    height: 96,
+    width: 2.5,
+    height: 80,
     displayValue: false,
     margin: 2,
     background: '#ffffff'

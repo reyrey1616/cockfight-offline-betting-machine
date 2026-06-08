@@ -1,9 +1,5 @@
 import { BrowserWindow } from 'electron'
 
-/** 80mm thermal roll width; height is a generous cap for short slips. Microns (1 mm = 1000). */
-const THERMAL_PAGE_WIDTH_MICRONS = 80_000
-const THERMAL_PAGE_HEIGHT_MICRONS = 200_000
-
 const VIRTUAL_PRINTER_RE = /pdf|xps|one note|onenote|fax|send to|microsoft print/i
 
 async function waitForPrintReady(webContents) {
@@ -31,11 +27,6 @@ async function waitForPrintReady(webContents) {
   await new Promise((resolve) => setTimeout(resolve, 150))
 }
 
-/**
- * Pick a physical printer: configured name, else default (skip PDF/XPS virtual printers).
- * @param {import('electron').WebContents} webContents
- * @param {string | undefined} configuredName
- */
 async function resolvePrinterName(webContents, configuredName) {
   const trimmed = configuredName?.trim()
   if (trimmed) return trimmed
@@ -52,15 +43,18 @@ async function resolvePrinterName(webContents, configuredName) {
   }
 }
 
+/**
+ * Match browser `window.print()` — use CSS `@page` (e.g. `80mm auto`), not a fixed
+ * 200mm Electron pageSize (wastes paper at top) or a short custom pageSize where
+ * width > height (often prints landscape on thermal drivers).
+ */
 function buildPrintOptions(config, deviceName) {
   const opts = {
     silent: config.silentPrint !== false,
     printBackground: true,
     margins: { marginType: 'none' },
-    pageSize: {
-      width: THERMAL_PAGE_WIDTH_MICRONS,
-      height: THERMAL_PAGE_HEIGHT_MICRONS
-    }
+    landscape: false,
+    preferCSSPageSize: true
   }
   if (deviceName) {
     opts.deviceName = deviceName
@@ -69,8 +63,6 @@ function buildPrintOptions(config, deviceName) {
 }
 
 /**
- * Silent (or dialog) print of HTML on 80mm thermal.
- *
  * @param {import('electron').BrowserWindow} parentWin
  * @param {string} html
  * @param {{ printerName?: string, silentPrint?: boolean }} config
@@ -82,7 +74,7 @@ export async function printHtmlSlip(parentWin, html, config) {
     show: false,
     parent: parentWin,
     width: 320,
-    height: 400,
+    height: 480,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

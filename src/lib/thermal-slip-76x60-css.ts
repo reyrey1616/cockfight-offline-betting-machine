@@ -2,16 +2,19 @@
 export const THERMAL_SLIP_76X60_CSS = `
     @page { margin: 0; size: 80mm auto; }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      padding: 2mm;
+      padding: 0;
       width: 80mm;
+      max-width: 80mm;
+      overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
       color: #000;
       background: #fff;
     }
     .slip {
       width: 76mm;
+      max-width: 100%;
       height: 60mm;
       margin: 0 auto;
       border: 2px solid #000;
@@ -28,8 +31,9 @@ export const THERMAL_SLIP_76X60_CSS = `
       align-items: center;
       justify-content: center;
       min-height: 0;
-      max-height: 26mm;
+      max-height: 22mm;
       padding: 0.5mm 0;
+      overflow: hidden;
     }
     .barcode {
       display: block;
@@ -42,6 +46,8 @@ export const THERMAL_SLIP_76X60_CSS = `
     .meta {
       flex: 0 0 auto;
       width: 100%;
+      min-width: 0;
+      overflow: hidden;
     }
     .title {
       flex: 0 0 auto;
@@ -58,6 +64,7 @@ export const THERMAL_SLIP_76X60_CSS = `
       line-height: 1.3;
       text-align: left;
       word-break: break-word;
+      overflow-wrap: anywhere;
     }
     .line + .line { margin-top: 0.75mm; }
     .label { font-weight: 700; }
