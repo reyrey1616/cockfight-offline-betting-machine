@@ -73,6 +73,10 @@ npm run dist
 | **macOS .dmg** | Mac | `release/FMJ offline betting machine *.dmg` |
 | **Windows .exe** | Windows | `release/FMJ offline betting machine Setup *.exe` |
 
+**Windows “Cannot create symbolic link” (winCodeSign):** `package.json` sets `win.signAndEditExecutable: false` so unsigned installers build without extracting winCodeSign (which needs symlink privileges on Windows). For code-signed builds, enable **Developer Mode** in Windows settings and remove that flag.
+
+**No installer needed:** `npm run pack` → runnable app in `release/win-unpacked/`.
+
 ## 3. Install on each teller PC (repeat for every kiosk)
 
 Use the **same** `.dmg` / `.exe` on each teller computer. Each PC only needs the app + its own printer; no Node.js.
