@@ -1,8 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { ElectronAPI } from '@/lib/electron.d'
+
 vi.mock('@/lib/render-ticket-barcode', () => ({
   cashSlipCodeToBarcodeDataUrl: () => 'data:image/png;base64,test'
 }))
+
+function makeElectronAPI(
+  overrides: Partial<ElectronAPI> & Pick<ElectronAPI, 'printCashSlip'>
+): ElectronAPI {
+  return {
+    isElectron: true,
+    printBetTicket: vi.fn(),
+    printCollectorBadge: vi.fn(),
+    printPayoutReceipt: vi.fn(),
+    getDesktopConfig: vi.fn(),
+    ...overrides
+  }
+}
 
 describe('printCashSlip', () => {
   afterEach(() => {
@@ -12,13 +27,7 @@ describe('printCashSlip', () => {
 
   it('uses Electron silent print when available', async () => {
     const printCashSlipIpc = vi.fn().mockResolvedValue({ ok: true })
-    window.electronAPI = {
-      isElectron: true,
-      printBetTicket: vi.fn(),
-      printCollectorBadge: vi.fn(),
-      printCashSlip: printCashSlipIpc,
-      getDesktopConfig: vi.fn()
-    }
+    window.electronAPI = makeElectronAPI({ printCashSlip: printCashSlipIpc })
 
     const { printCashSlip } = await import('@/lib/print-cash-slip')
     const ok = await printCashSlip({
@@ -48,7 +57,8 @@ describe('printCashSlip', () => {
       code: '',
       amount: '100',
       collectorName: 'A',
-      tellerName: 'B'
+      tellerName: 'B',
+      recordedAt: '2026-06-07T14:30:00.000Z'
     })
     expect(ok).toBe(false)
   })

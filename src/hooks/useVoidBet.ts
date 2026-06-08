@@ -11,8 +11,8 @@ export function useVoidBet() {
   const setCashBalance = useSetCashBalance()
 
   return useMutation({
-    mutationFn: ({ betId, body }: { betId: string; body?: VoidBetRequest }) =>
-      voidBet(betId, body ?? {}),
+    mutationFn: ({ betId, body }: { betId: string; body: VoidBetRequest }) =>
+      voidBet(betId, body),
     onSuccess: (data) => {
       setCashBalance(data.actorBalance)
       void invalidateTellerBetHistoryQueries(queryClient)

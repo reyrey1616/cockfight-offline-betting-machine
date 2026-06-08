@@ -4,7 +4,7 @@ import { formatMoney } from '@/lib/format-money'
 import { hasElectronPrintBridge, warnIfBrowserPrintFallback } from '@/lib/electron-print-bridge'
 import { formatSlipTimestamp } from '@/lib/thermal-slip-76x60-css'
 import { ticketCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
-import type { BetRow, Fight, PlaceBetFightSummary, PlaceBetResponse } from '@/types/api'
+import type { BetRow, PlaceBetResponse } from '@/types/api'
 
 export interface BetTicketPrintInput {
   response: PlaceBetResponse

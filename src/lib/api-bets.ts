@@ -40,7 +40,7 @@ export async function placeBet(body: PlaceBetRequest): Promise<PlaceBetResponse>
 /** POST /bets/:id/void — cancel a pending ticket (OPEN/LAST_CALL fight + admin barcode). */
 export async function voidBet(
   betId: string,
-  body: VoidBetRequest = {}
+  body: VoidBetRequest
 ): Promise<VoidBetResponse> {
   const { data } = await api.post<VoidBetResponse>(
     `/bets/${encodeURIComponent(betId)}/void`,
