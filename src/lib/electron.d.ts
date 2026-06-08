@@ -65,6 +65,8 @@ export interface ElectronAPI {
   printCashSlip: (payload: CashSlipPrintPayload) => Promise<CashSlipPrintResult>
   printPayoutReceipt: (payload: PayoutReceiptPrintPayload) => Promise<PayoutReceiptPrintResult>
   getDesktopConfig: () => Promise<DesktopConfigSummary>
+  /** Fired when background bet slip print fails (IPC returns before print finishes). */
+  onBetTicketPrintFailed?: (callback: (message: string) => void) => void
 }
 
 declare global {

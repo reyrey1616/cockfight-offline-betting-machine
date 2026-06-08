@@ -15,7 +15,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   printCollectorBadge: (payload) => ipcRenderer.invoke('print-collector-badge', payload),
   printCashSlip: (payload) => ipcRenderer.invoke('print-cash-slip', payload),
   printPayoutReceipt: (payload) => ipcRenderer.invoke('print-payout-receipt', payload),
-  getDesktopConfig: () => ipcRenderer.invoke('get-desktop-config')
+  getDesktopConfig: () => ipcRenderer.invoke('get-desktop-config'),
+  onBetTicketPrintFailed: (callback) => {
+    if (typeof callback !== 'function') return
+    ipcRenderer.on('bet-ticket-print-failed', (_event, message) => {
+      callback(typeof message === 'string' ? message : 'Print failed')
+    })
+  }
 })
 
 void ipcRenderer.invoke('get-kiosk-config').then((cfg) => {

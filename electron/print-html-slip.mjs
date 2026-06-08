@@ -1,5 +1,8 @@
 import { BrowserWindow } from 'electron'
 
+const THERMAL_PAGE_WIDTH_MICRONS = 80_000
+const PRINT_TIMEOUT_MS = 8_000
+
 const VIRTUAL_PRINTER_RE = /pdf|xps|one note|onenote|fax|send to|microsoft print/i
 
 async function waitForPrintReady(webContents) {
@@ -44,17 +47,21 @@ async function resolvePrinterName(webContents, configuredName) {
 }
 
 /**
- * Match browser `window.print()` — use CSS `@page` (e.g. `80mm auto`), not a fixed
- * 200mm Electron pageSize (wastes paper at top) or a short custom pageSize where
- * width > height (often prints landscape on thermal drivers).
+ * Explicit page height + `landscape: false` for thermal rolls.
+ * Do not use `preferCSSPageSize` — it can hang silent print on some drivers.
  */
 function buildPrintOptions(config, deviceName) {
+  const pageHeightMm = typeof config.pageHeightMm === 'number' ? config.pageHeightMm : 66
   const opts = {
     silent: config.silentPrint !== false,
     printBackground: true,
     margins: { marginType: 'none' },
     landscape: false,
-    preferCSSPageSize: true
+    preferCSSPageSize: false,
+    pageSize: {
+      width: THERMAL_PAGE_WIDTH_MICRONS,
+      height: Math.round(pageHeightMm * 1000)
+    }
   }
   if (deviceName) {
     opts.deviceName = deviceName
@@ -62,17 +69,44 @@ function buildPrintOptions(config, deviceName) {
   return opts
 }
 
+function printWithTimeout(webContents, opts, printWin, timeoutMs = PRINT_TIMEOUT_MS) {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = (result) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      resolve(result)
+    }
+
+    const timer = setTimeout(() => {
+      console.warn('[print-html-slip] print timed out — closing print window', {
+        timeoutMs,
+        deviceName: opts.deviceName
+      })
+      if (!printWin.isDestroyed()) {
+        printWin.destroy()
+      }
+      finish({ success: false, failureReason: 'Print timed out' })
+    }, timeoutMs)
+
+    webContents.print(opts, (success, failureReason) => {
+      finish({ success, failureReason: failureReason ?? 'Print failed' })
+    })
+  })
+}
+
 /**
- * @param {import('electron').BrowserWindow} parentWin
+ * @param {import('electron').BrowserWindow} _parentWin unused — do not set child `parent` (freezes kiosk UI while printing)
  * @param {string} html
- * @param {{ printerName?: string, silentPrint?: boolean }} config
+ * @param {{ printerName?: string, silentPrint?: boolean, pageHeightMm?: number }} config
  */
-export async function printHtmlSlip(parentWin, html, config) {
+export async function printHtmlSlip(_parentWin, html, config) {
   const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
 
+  // No `parent` — modal child windows block the teller UI until print finishes.
   const printWin = new BrowserWindow({
     show: false,
-    parent: parentWin,
     width: 320,
     height: 480,
     webPreferences: {
@@ -89,14 +123,14 @@ export async function printHtmlSlip(parentWin, html, config) {
     const deviceName = await resolvePrinterName(printWin.webContents, config.printerName)
     const opts = buildPrintOptions(config, deviceName)
 
-    const result = await new Promise((resolve) => {
-      printWin.webContents.print(opts, (success, failureReason) => {
-        resolve({ success, failureReason: failureReason ?? 'Print failed' })
-      })
-    })
+    const result = await printWithTimeout(printWin.webContents, opts, printWin)
 
     if (!result.success) {
-      console.warn('[print-html-slip]', result.failureReason, { deviceName, silent: opts.silent })
+      console.warn('[print-html-slip]', result.failureReason, {
+        deviceName,
+        silent: opts.silent,
+        pageHeightMm: config.pageHeightMm ?? 66
+      })
       return { ok: false, error: result.failureReason }
     }
 
@@ -106,6 +140,11 @@ export async function printHtmlSlip(parentWin, html, config) {
     console.error('[print-html-slip]', message)
     return { ok: false, error: message }
   } finally {
-    printWin.destroy()
+    if (!printWin.isDestroyed()) {
+      printWin.destroy()
+    }
   }
 }
+
+/** 60mm slip + border — bet ticket Electron page height. */
+export const BET_SLIP_PAGE_HEIGHT_MM = 66

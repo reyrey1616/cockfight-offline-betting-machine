@@ -15,7 +15,10 @@ import { RouterProvider } from 'react-router-dom'
 import './index.css'
 
 import { AppProviders } from '@/contexts'
+import { setupElectronPrintListeners } from '@/lib/setup-electron-print-listeners'
 import { router } from '@/routes/router'
+
+setupElectronPrintListeners()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

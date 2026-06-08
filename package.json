@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "verify:electron-print": "electron scripts/verify-electron-print.mjs",
     "dev:electron": "node scripts/run-dev.mjs",
     "electron": "electron .",
     "electron:prod": "node scripts/run-prod.mjs",
@@ -109,7 +110,8 @@
     },
     "win": {
       "target": ["nsis"],
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
