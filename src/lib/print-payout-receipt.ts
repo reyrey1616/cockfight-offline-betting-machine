@@ -1,4 +1,5 @@
 import { BET_SIDE_LABEL } from '@/constants'
+import { hasElectronPrintBridge, warnIfBrowserPrintFallback } from '@/lib/electron-print-bridge'
 import {
   buildPayoutReceiptSlipHtml,
   formatSlipTimestamp
@@ -61,9 +62,10 @@ function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFields>): bool
 export async function printPayoutReceipt(input: PayoutReceiptPrintInput): Promise<boolean> {
   const fields = buildSlipFields(input)
   const api = window.electronAPI
-  if (api?.isElectron) {
+  if (hasElectronPrintBridge() && api) {
     const result = await api.printPayoutReceipt(fields)
     return result.ok
   }
+  warnIfBrowserPrintFallback()
   return printViaBrowserWindow(fields)
 }

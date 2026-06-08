@@ -1,12 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
-import { loadDesktopConfig } from './config.mjs'
-
-const config = loadDesktopConfig()
-const apiBaseUrl = config.apiBaseUrl?.trim() || null
+/** Populated async from main — avoids importing main-process `app` in preload (breaks on some Windows builds). */
+let kioskApiBaseUrl = ''
 
 contextBridge.exposeInMainWorld('kioskConfig', {
-  apiBaseUrl
+  get apiBaseUrl() {
+    return kioskApiBaseUrl || null
+  }
 })
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -16,4 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   printCashSlip: (payload) => ipcRenderer.invoke('print-cash-slip', payload),
   printPayoutReceipt: (payload) => ipcRenderer.invoke('print-payout-receipt', payload),
   getDesktopConfig: () => ipcRenderer.invoke('get-desktop-config')
+})
+
+void ipcRenderer.invoke('get-kiosk-config').then((cfg) => {
+  kioskApiBaseUrl = cfg?.apiBaseUrl?.trim() || ''
 })

@@ -1,6 +1,7 @@
 import { buildBetTicketSlipHtml } from '@/lib/bet-ticket-slip-html'
 import { BET_SIDE_LABEL } from '@/constants'
 import { formatMoney } from '@/lib/format-money'
+import { hasElectronPrintBridge, warnIfBrowserPrintFallback } from '@/lib/electron-print-bridge'
 import { formatSlipTimestamp } from '@/lib/thermal-slip-76x60-css'
 import { ticketCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
 import type { BetRow, Fight, PlaceBetFightSummary, PlaceBetResponse } from '@/types/api'
@@ -39,10 +40,11 @@ function buildSlipFields(input: BetTicketPrintInput) {
 
 async function sendSlipToPrinter(fields: ReturnType<typeof buildSlipFieldsFromBet>): Promise<boolean> {
   const api = window.electronAPI
-  if (api?.isElectron) {
+  if (hasElectronPrintBridge() && api) {
     const result = await api.printBetTicket(fields)
     return result.ok
   }
+  warnIfBrowserPrintFallback()
   return printViaBrowserWindow(fields)
 }
 

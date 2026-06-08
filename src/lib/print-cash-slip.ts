@@ -1,4 +1,5 @@
 import { buildCashSlipHtml } from '@/lib/cash-slip-html'
+import { hasElectronPrintBridge, warnIfBrowserPrintFallback } from '@/lib/electron-print-bridge'
 import { formatMoney } from '@/lib/format-money'
 import { cashSlipCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
 import { formatSlipTimestamp } from '@/lib/thermal-slip-76x60-css'
@@ -61,9 +62,10 @@ export async function printCashSlip(input: CashSlipPrintInput): Promise<boolean>
   if (!input.code?.trim()) return false
   const fields = buildSlipFields(input)
   const api = window.electronAPI
-  if (api?.isElectron) {
+  if (hasElectronPrintBridge() && api) {
     const result = await api.printCashSlip(fields)
     return result.ok
   }
+  warnIfBrowserPrintFallback()
   return printViaBrowserWindow(fields)
 }

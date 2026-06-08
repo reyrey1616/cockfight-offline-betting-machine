@@ -64,6 +64,15 @@ async function createWindow() {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('get-kiosk-config', () => {
+    const c = loadDesktopConfig()
+    return {
+      apiBaseUrl: c.apiBaseUrl?.trim() || null,
+      silentPrint: c.silentPrint !== false,
+      printerName: c.printerName?.trim() || null
+    }
+  })
+
   ipcMain.handle('get-desktop-config', () => {
     const c = loadDesktopConfig()
     return {

@@ -1,4 +1,5 @@
 import { buildCollectorBadgeSlipHtml } from '@/lib/collector-badge-slip-html'
+import { hasElectronPrintBridge, warnIfBrowserPrintFallback } from '@/lib/electron-print-bridge'
 import { ticketCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
 import type { Collector } from '@/types/api'
 
@@ -52,9 +53,10 @@ function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFields>): bool
 export async function printCollectorBadge(input: CollectorBadgePrintInput): Promise<boolean> {
   const fields = buildSlipFields(input)
   const api = window.electronAPI
-  if (api?.isElectron) {
+  if (hasElectronPrintBridge() && api) {
     const result = await api.printCollectorBadge(fields)
     return result.ok
   }
+  warnIfBrowserPrintFallback()
   return printViaBrowserWindow(fields)
 }

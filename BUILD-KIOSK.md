@@ -31,8 +31,8 @@ Edit **`config.json`**:
 | Field | Meaning |
 |-------|---------|
 | `apiBaseUrl` | **Required** — **server** LAN IP, same on every kiosk at this site (never `localhost` on teller PCs) |
-| `printerName` | `""` = Windows/Mac **default printer** (XP-K200L) |
-| `silentPrint` | `true` = print ticket after each bet, no dialog |
+| `printerName` | `""` = Windows/Mac **default physical printer** (skips “Microsoft Print to PDF”). Set the exact name from Windows Settings if needed. |
+| `silentPrint` | `true` = print ticket after each bet, no dialog (requires the **installed Electron app**, not Chrome at `localhost:5173`) |
 | `kioskFullscreen` | `true` = fullscreen kiosk window |
 
 This file is copied into the installer. Change IP here and rebuild if the server moves.
@@ -131,3 +131,15 @@ npm run dev:electron
 ```
 
 Starts Vite and opens Electron at `http://localhost:5173/kiosk` (API from `.env.development`).
+
+**Do not** open `http://localhost:5173` in Chrome/Edge for kiosk testing — printing will show the system dialog (blob print preview). Silent thermal print only works through the Electron shell.
+
+## 6. Windows — print dialog instead of auto-print
+
+If you see **Save as PDF** / a print popup:
+
+1. Use the **installed `.exe`**, not a browser tab at `localhost:5173`.
+2. Set the thermal printer as **Windows default** (not “Microsoft Print to PDF”).
+3. Confirm `config.json` next to the app has `"silentPrint": true`.
+4. Optional: set `"printerName"` to the exact printer name from Windows Settings.
+5. Rebuild/reinstall after pulling print fixes, then fully quit and reopen the app.
