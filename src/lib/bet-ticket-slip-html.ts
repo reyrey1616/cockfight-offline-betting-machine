@@ -19,7 +19,7 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** Keep in sync with desktop `electron/print-bet-ticket.mjs`. */
+/** Electron silent print loads this exact HTML from the renderer via IPC. */
 export const BET_TICKET_SLIP_CSS = THERMAL_SLIP_76X60_CSS
 
 export function buildBetTicketSlipHtml(fields: BetTicketSlipFields): string {
