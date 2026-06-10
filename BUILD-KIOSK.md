@@ -31,7 +31,7 @@ Edit **`config.json`**:
 | Field | Meaning |
 |-------|---------|
 | `apiBaseUrl` | **Required** — **server** LAN IP, same on every kiosk at this site (never `localhost` on teller PCs) |
-| `printerName` | `""` = Windows/Mac **default physical printer** (skips “Microsoft Print to PDF”). Set the exact name from Windows Settings if needed. |
+| `printerName` | `""` = **Windows default** physical printer (same as the print dialog). If you have several copies of the same driver (e.g. `XP-80C (copy 1)` vs `copy 3`), set the exact online name here — silent print used to pick the first thermal in list order, not your default. |
 | `silentPrint` | `true` = print ticket after each bet, no dialog (requires the **installed Electron app**, not Chrome at `localhost:5173`) |
 | `kioskFullscreen` | `true` = fullscreen kiosk window |
 

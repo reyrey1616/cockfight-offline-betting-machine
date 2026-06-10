@@ -12,24 +12,39 @@ import { app, BrowserWindow } from 'electron'
 import { printHtmlSlip, verifySlipLayout } from '../electron/print-html-slip.mjs'
 import { printBetTicket } from '../electron/print-bet-ticket.mjs'
 
-const THERMAL_SLIP_CSS = `
-    @page { margin: 0; size: 80mm auto; }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; width: 80mm; font-family: system-ui, sans-serif; color: #000; background: #fff; }
-    .slip { width: 76mm; height: 60mm; margin: 0 auto; border: 2px solid #000; padding: 2mm; }
-    .line { margin: 0; font-size: 8px; }
-`
+const THERMAL_SLIP_CSS = fs.readFileSync(
+  path.join(process.cwd(), 'src/lib/thermal-slip-76x60-css.ts'),
+  'utf8'
+).match(/export const THERMAL_SLIP_76X60_CSS = `([\s\S]*?)`/)?.[1]
+
+if (!THERMAL_SLIP_CSS) {
+  throw new Error('Could not load production THERMAL_SLIP_76X60_CSS')
+}
 
 const TINY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
+/** Same structure as buildBetTicketSlipHtml — verify must match real bet slips. */
 const SAMPLE_HTML = `<!DOCTYPE html>
-<html><head><meta charset="utf-8" /><style>${THERMAL_SLIP_CSS}</style></head>
-<body><div class="slip">
-  <img src="${TINY_PNG}" width="120" height="40" alt="barcode" />
-  <p class="line">Fight #: 1</p>
-  <p class="line">Bet amount: 500.00</p>
-  <p class="line">Teller: Test Teller</p>
-</div></body></html>`
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>${THERMAL_SLIP_CSS}</style>
+</head>
+<body>
+  <div class="slip">
+    <div class="barcode-wrap">
+      <img class="barcode" src="${TINY_PNG}" alt="TEST-VERIFY-001" />
+    </div>
+    <div class="meta">
+      <p class="line"><span class="label">Fight #:</span> <span class="value">1</span></p>
+      <p class="line"><span class="label">Betting side:</span> <span class="value">Meron</span></p>
+      <p class="line"><span class="label">Bet amount:</span> <span class="value emphasis">500.00</span></p>
+      <p class="line"><span class="label">Teller:</span> <span class="value">Test Teller</span></p>
+      <p class="line"><span class="label">Date and timestamp:</span> <span class="value">May 31, 2026, 12:00 PM</span></p>
+    </div>
+  </div>
+</body>
+</html>`
 
 function assert(condition, message) {
   if (!condition) throw new Error(message)
