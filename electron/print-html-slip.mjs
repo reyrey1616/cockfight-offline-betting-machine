@@ -1,7 +1,10 @@
 import { BrowserWindow } from 'electron'
 
-const THERMAL_PAGE_WIDTH_MICRONS = 80_000
-const PRINT_TIMEOUT_MS = 8_000
+import { mmToPx, ROLL_WIDTH_MM } from './thermal-px.mjs'
+
+const THERMAL_PAGE_WIDTH_MICRONS = ROLL_WIDTH_MM * 1000
+const PRINT_TIMEOUT_MS = 12_000
+const LAYOUT_SETTLE_MS = 350
 
 const VIRTUAL_PRINTER_RE = /pdf|xps|one note|onenote|fax|send to|microsoft print/i
 
@@ -27,7 +30,7 @@ async function waitForPrintReady(webContents) {
       }
     })
   `)
-  await new Promise((resolve) => setTimeout(resolve, 150))
+  await new Promise((resolve) => setTimeout(resolve, LAYOUT_SETTLE_MS))
 }
 
 async function resolvePrinterName(webContents, configuredName) {
@@ -46,10 +49,6 @@ async function resolvePrinterName(webContents, configuredName) {
   }
 }
 
-/**
- * Explicit page height + `landscape: false` for thermal rolls.
- * Do not use `preferCSSPageSize` — it can hang silent print on some drivers.
- */
 function buildPrintOptions(config, deviceName) {
   const pageHeightMm = typeof config.pageHeightMm === 'number' ? config.pageHeightMm : 66
   const opts = {
@@ -96,19 +95,46 @@ function printWithTimeout(webContents, opts, printWin, timeoutMs = PRINT_TIMEOUT
   })
 }
 
+async function fitPrintWindow(printWin, config) {
+  const widthPx = config.pageWidthPx ?? mmToPx(ROLL_WIDTH_MM)
+  const heightPx = config.pageHeightPx ?? mmToPx(config.pageHeightMm ?? 66)
+  printWin.setContentSize(Math.max(widthPx, 200), Math.max(heightPx, 200))
+  await printWin.webContents.setZoomFactor(1)
+}
+
+export async function verifySlipLayout(webContents) {
+  try {
+    return await webContents.executeJavaScript(`
+      (() => {
+        const slip = document.querySelector('.slip');
+        if (!slip) return { ok: false, reason: 'missing .slip' };
+        const rect = slip.getBoundingClientRect();
+        return { ok: rect.height >= 80, height: rect.height, width: rect.width };
+      })()
+    `)
+  } catch {
+    return { ok: false, reason: 'layout check failed' }
+  }
+}
+
 /**
- * @param {import('electron').BrowserWindow} _parentWin unused — do not set child `parent` (freezes kiosk UI while printing)
+ * @param {import('electron').BrowserWindow} _parentWin
  * @param {string} html
- * @param {{ printerName?: string, silentPrint?: boolean, pageHeightMm?: number }} config
+ * @param {{
+ *   printerName?: string
+ *   silentPrint?: boolean
+ *   pageHeightMm?: number
+ *   pageWidthPx?: number
+ *   pageHeightPx?: number
+ * }} config
  */
 export async function printHtmlSlip(_parentWin, html, config) {
   const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
 
-  // No `parent` — modal child windows block the teller UI until print finishes.
   const printWin = new BrowserWindow({
     show: false,
-    width: 320,
-    height: 480,
+    width: config.pageWidthPx ?? mmToPx(ROLL_WIDTH_MM),
+    height: config.pageHeightPx ?? mmToPx(config.pageHeightMm ?? 66),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -119,6 +145,12 @@ export async function printHtmlSlip(_parentWin, html, config) {
   try {
     await printWin.loadURL(dataUrl)
     await waitForPrintReady(printWin.webContents)
+    await fitPrintWindow(printWin, config)
+
+    const layout = await verifySlipLayout(printWin.webContents)
+    if (!layout.ok) {
+      console.warn('[print-html-slip] slip layout too small before print', layout)
+    }
 
     const deviceName = await resolvePrinterName(printWin.webContents, config.printerName)
     const opts = buildPrintOptions(config, deviceName)
@@ -129,7 +161,8 @@ export async function printHtmlSlip(_parentWin, html, config) {
       console.warn('[print-html-slip]', result.failureReason, {
         deviceName,
         silent: opts.silent,
-        pageHeightMm: config.pageHeightMm ?? 66
+        pageHeightMm: config.pageHeightMm ?? 66,
+        layout
       })
       return { ok: false, error: result.failureReason }
     }

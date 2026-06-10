@@ -1,64 +1,61 @@
+import { mmToPx, ROLL_WIDTH_MM } from './thermal-px.mjs'
 import { BET_SLIP_PAGE_HEIGHT_MM, printHtmlSlip } from './print-html-slip.mjs'
 
-/** Inlined from machine-client `thermal-slip-76x60-css.ts` — keep in sync. */
-const THERMAL_SLIP_76X60_CSS = `
-    @page { margin: 0; size: 80mm auto; }
+/** Electron print CSS in px — browser keeps mm in `thermal-slip-76x60-css.ts`. */
+const PAGE_W = mmToPx(ROLL_WIDTH_MM)
+const PAGE_H = mmToPx(BET_SLIP_PAGE_HEIGHT_MM)
+const SLIP_W = mmToPx(76)
+const SLIP_H = mmToPx(60)
+
+const THERMAL_SLIP_BET_PRINT_CSS = `
+    @page { margin: 0; size: ${PAGE_W}px ${PAGE_H}px; }
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
-      width: 80mm;
-      max-width: 80mm;
+      width: ${PAGE_W}px;
+      height: ${PAGE_H}px;
       overflow: hidden;
       font-family: system-ui, -apple-system, sans-serif;
       color: #000;
       background: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .slip {
-      width: 76mm;
-      max-width: 100%;
-      height: 60mm;
+      width: ${SLIP_W}px;
+      height: ${SLIP_H}px;
       margin: 0 auto;
       border: 2px solid #000;
-      padding: 2mm;
+      padding: 8px 8px 4px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      gap: 1mm;
+      gap: 4px;
       overflow: hidden;
     }
     .barcode-wrap {
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 0;
-      max-height: 22mm;
-      padding: 0.5mm 0;
+      max-height: 83px;
+      padding: 2px 0;
       overflow: hidden;
     }
     .barcode {
       display: block;
       width: 100%;
       max-width: 100%;
-      max-height: 100%;
+      max-height: 83px;
       height: auto;
       object-fit: contain;
     }
     .meta {
-      flex: 0 0 auto;
+      flex: 1 1 auto;
       width: 100%;
       min-width: 0;
       overflow: hidden;
-    }
-    .title {
-      flex: 0 0 auto;
-      margin: 0 0 1mm;
-      font-size: 9px;
-      font-weight: 800;
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
     }
     .line {
       margin: 0;
@@ -68,20 +65,10 @@ const THERMAL_SLIP_76X60_CSS = `
       word-break: break-word;
       overflow-wrap: anywhere;
     }
-    .line + .line { margin-top: 0.75mm; }
+    .line + .line { margin-top: 3px; }
     .label { font-weight: 700; }
     .value { font-size: 9px; font-weight: 600; }
     .emphasis { font-size: 10px; font-weight: 800; }
-    .cut {
-      flex: 0 0 auto;
-      margin-top: auto;
-      padding-top: 1.5mm;
-      border-top: 1px dashed #000;
-      font-size: 8px;
-      font-weight: 700;
-      text-align: center;
-      letter-spacing: 0.04em;
-    }
 `
 
 function escapeHtml(s) {
@@ -92,7 +79,7 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;')
 }
 
-function buildTicketHtml(fields) {
+export function buildBetTicketPrintHtml(fields) {
   const fightNumber = escapeHtml(fields.fightNumber)
   const bettingSide = escapeHtml(fields.bettingSide)
   const betAmount = escapeHtml(fields.betAmount)
@@ -104,7 +91,7 @@ function buildTicketHtml(fields) {
 <html>
 <head>
   <meta charset="utf-8" />
-  <style>${THERMAL_SLIP_76X60_CSS}
+  <style>${THERMAL_SLIP_BET_PRINT_CSS}
   </style>
 </head>
 <body>
@@ -138,8 +125,10 @@ function buildTicketHtml(fields) {
  * @param {{ printerName?: string, silentPrint?: boolean }} config
  */
 export async function printBetTicket(parentWin, ticket, config) {
-  return printHtmlSlip(parentWin, buildTicketHtml(ticket), {
+  return printHtmlSlip(parentWin, buildBetTicketPrintHtml(ticket), {
     ...config,
-    pageHeightMm: BET_SLIP_PAGE_HEIGHT_MM
+    pageHeightMm: BET_SLIP_PAGE_HEIGHT_MM,
+    pageWidthPx: PAGE_W,
+    pageHeightPx: PAGE_H
   })
 }

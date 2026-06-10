@@ -4,8 +4,10 @@
  */
 import { app, BrowserWindow } from 'electron'
 
-import { BET_SLIP_PAGE_HEIGHT_MM, printHtmlSlip } from '../electron/print-html-slip.mjs'
+import { buildBetTicketPrintHtml } from '../electron/print-bet-ticket.mjs'
+import { BET_SLIP_PAGE_HEIGHT_MM, printHtmlSlip, verifySlipLayout } from '../electron/print-html-slip.mjs'
 import { printBetTicket } from '../electron/print-bet-ticket.mjs'
+import { mmToPx } from '../electron/thermal-px.mjs'
 
 const TINY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
@@ -34,6 +36,23 @@ async function run() {
 
   assert(BET_SLIP_PAGE_HEIGHT_MM === 66, `expected BET_SLIP_PAGE_HEIGHT_MM 66, got ${BET_SLIP_PAGE_HEIGHT_MM}`)
 
+  const layoutWin = new BrowserWindow({
+    show: false,
+    width: mmToPx(80),
+    height: mmToPx(BET_SLIP_PAGE_HEIGHT_MM),
+    webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: false }
+  })
+  await layoutWin.loadURL(
+    `data:text/html;charset=utf-8,${encodeURIComponent(buildBetTicketPrintHtml(SAMPLE_TICKET))}`
+  )
+  await layoutWin.webContents.executeJavaScript(
+    `new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })))`
+  )
+  await new Promise((r) => setTimeout(r, 400))
+  const slipLayout = await verifySlipLayout(layoutWin.webContents)
+  layoutWin.destroy()
+  assert(slipLayout.ok, `bet slip should render with height >= 80px, got ${JSON.stringify(slipLayout)}`)
+
   const ipcStart = performance.now()
   const ipcResult = { ok: true }
   void printBetTicket(mainWin, SAMPLE_TICKET, { silentPrint: true, printerName: '' }).then((r) => {
@@ -49,7 +68,7 @@ async function run() {
     pageHeightMm: BET_SLIP_PAGE_HEIGHT_MM
   })
   const printMs = performance.now() - printStart
-  assert(printMs < 10_000, `printHtmlSlip should finish within 10s (timeout 8s), took ${printMs.toFixed(0)}ms`)
+  assert(printMs < 15_000, `printHtmlSlip should finish within 15s, took ${printMs.toFixed(0)}ms`)
 
   const slipStart = performance.now()
   const slipResult = await printBetTicket(mainWin, SAMPLE_TICKET, {
@@ -57,7 +76,7 @@ async function run() {
     printerName: ''
   })
   const slipMs = performance.now() - slipStart
-  assert(slipMs < 10_000, `printBetTicket should finish within 10s, took ${slipMs.toFixed(0)}ms`)
+  assert(slipMs < 15_000, `printBetTicket should finish within 15s, took ${slipMs.toFixed(0)}ms`)
 
   console.log(
     JSON.stringify(
