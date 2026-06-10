@@ -39,9 +39,10 @@ function buildSlipFields(input: BetTicketPrintInput) {
 }
 
 async function sendSlipToPrinter(fields: ReturnType<typeof buildSlipFieldsFromBet>): Promise<boolean> {
+  const html = buildBetTicketSlipHtml(fields)
   const api = window.electronAPI
   if (hasElectronPrintBridge() && api) {
-    const result = await api.printBetTicket(fields)
+    const result = await api.printBetTicket({ html })
     return result.ok
   }
   warnIfBrowserPrintFallback()
@@ -52,7 +53,7 @@ async function sendSlipToPrinter(fields: ReturnType<typeof buildSlipFieldsFromBe
  * Browser fallback: load slip HTML via blob URL (document.write on about:blank
  * is blocked when noopener is set and is unreliable in modern Chrome).
  */
-function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFields>): boolean {
+function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFieldsFromBet>): boolean {
   const html = buildBetTicketSlipHtml(fields)
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const blobUrl = URL.createObjectURL(blob)

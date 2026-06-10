@@ -3,15 +3,9 @@ export interface KioskConfig {
   apiBaseUrl: string | null
 }
 
-/** Payload for 80mm thermal bet slip — 76mm × 60mm (Electron main process). */
+/** Full slip document — same HTML as browser `window.print()` (`buildBetTicketSlipHtml`). */
 export interface BetTicketPrintPayload {
-  code: string
-  fightNumber: string
-  bettingSide: string
-  betAmount: string
-  tellerName: string
-  placedAt: string
-  barcodePngDataUrl: string
+  html: string
 }
 
 export interface BetTicketPrintResult {

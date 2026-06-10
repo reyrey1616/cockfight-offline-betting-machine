@@ -51,14 +51,10 @@ describe('printBetTicket', () => {
     expect(ok).toBe(true)
     expect(printBetTicketIpc).toHaveBeenCalledWith(
       expect.objectContaining({
-        code: 'XY99ZZZZ',
-        fightNumber: '1',
-        bettingSide: 'Meron',
-        betAmount: '500.00',
-        tellerName: 'Desk One',
-        barcodePngDataUrl: 'data:image/png;base64,test'
+        html: expect.stringContaining('XY99ZZZZ')
       })
     )
+    expect(printBetTicketIpc.mock.calls[0][0].html).toContain('Fight #:')
     expect(openSpy).not.toHaveBeenCalled()
   })
 
@@ -115,13 +111,9 @@ describe('reprintBetTicket', () => {
     expect(ok).toBe(true)
     expect(printBetTicketIpc).toHaveBeenCalledWith(
       expect.objectContaining({
-        code: 'XY99ZZZZ',
-        fightNumber: '12',
-        bettingSide: 'Wala',
-        betAmount: '500.00',
-        tellerName: 'Desk One',
-        barcodePngDataUrl: 'data:image/png;base64,test'
+        html: expect.stringContaining('XY99ZZZZ')
       })
     )
+    expect(printBetTicketIpc.mock.calls[0][0].html).toContain('Fight #:')
   })
 })
