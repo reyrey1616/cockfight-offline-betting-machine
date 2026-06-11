@@ -34,6 +34,7 @@ const SAMPLE_HTML = `<!DOCTYPE html>
   <div class="slip">
     <div class="barcode-wrap">
       <img class="barcode" src="${TINY_PNG}" alt="TEST-VERIFY-001" />
+      <p class="barcode-code">TEST-VERIFY-001</p>
     </div>
     <div class="meta">
       <p class="line"><span class="label">Fight #:</span> <span class="value">1</span></p>

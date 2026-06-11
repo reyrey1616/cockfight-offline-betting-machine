@@ -46,8 +46,9 @@ try {
     $drawH = $script:PaperHeightHi
 
     $e.Graphics.PageUnit = [System.Drawing.GraphicsUnit]::Display
-    $e.Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-    $e.Graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    # Nearest-neighbor keeps 1:1 thermal dots sharp (bicubic softens text/bars).
+    $e.Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+    $e.Graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
     $e.Graphics.DrawImage($bitmap, (-$hardX), (-$hardY + $topGuardHi), $drawW, $drawH)
     $e.HasMorePages = $false
   }

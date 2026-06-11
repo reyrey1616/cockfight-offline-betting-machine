@@ -35,7 +35,7 @@ export const THERMAL_ROLL_WIDTH_MM = 80
 /** Safe content width on XP-80 / XPrinter (~72mm printable on 80mm roll). */
 export const THERMAL_SLIP_WIDTH_MM = 72
 /** Max slip height — content is usually shorter; bitmap height follows capture. */
-export const THERMAL_SLIP_HEIGHT_MM = 52
+export const THERMAL_SLIP_HEIGHT_MM = 54
 
 /** Slip width in dots @ 203dpi — matches CSS layout, not the full 80mm roll. */
 export const THERMAL_PRINTABLE_DOTS = Math.round((THERMAL_SLIP_WIDTH_MM / 25.4) * THERMAL_DPI)
