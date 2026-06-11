@@ -4,6 +4,7 @@ import {
   buildPayoutReceiptSlipHtml,
   formatSlipTimestamp
 } from '@/lib/payout-receipt-slip-html'
+import { formatBoardOdds, settledOddsForSide } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import type { BetRow, PlaceBetFightSummary } from '@/types/api'
 
@@ -25,6 +26,7 @@ function buildSlipFields(input: PayoutReceiptPrintInput) {
     fightNumber: String(input.fight.fightNumber),
     bettingSide: BET_SIDE_LABEL[input.bet.side],
     betAmount: formatMoney(input.bet.amount),
+    odds: formatBoardOdds(settledOddsForSide(input.fight, input.bet.side)),
     payoutAmount: payout,
     paidAt: formatSlipTimestamp(paidAtIso)
   }
@@ -61,9 +63,10 @@ function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFields>): bool
 /** Print payout receipt after a winning ticket is marked paid. */
 export async function printPayoutReceipt(input: PayoutReceiptPrintInput): Promise<boolean> {
   const fields = buildSlipFields(input)
+  const html = buildPayoutReceiptSlipHtml(fields)
   const api = window.electronAPI
   if (hasElectronPrintBridge() && api) {
-    const result = await api.printPayoutReceipt(fields)
+    const result = await api.printPayoutReceipt({ html })
     return result.ok
   }
   warnIfBrowserPrintFallback()
