@@ -13,24 +13,16 @@ export interface BetTicketPrintResult {
   error?: string
 }
 
-/** Payload for 80mm thermal collector badge (Electron main process). */
+/** Full collector badge document — same HTML as browser `window.print()`. */
 export interface CollectorBadgePrintPayload {
-  name: string
-  code: string
-  barcodePngDataUrl: string
+  html: string
 }
 
 export type CollectorBadgePrintResult = BetTicketPrintResult
 
+/** Full cash slip document — same HTML as browser `window.print()`. */
 export interface CashSlipPrintPayload {
-  kind: 'deposit' | 'remit'
-  code: string
-  amount: string
-  collectorName: string
-  tellerName: string
-  recordedAt: string
-  notes?: string
-  barcodePngDataUrl: string
+  html: string
 }
 
 export type CashSlipPrintResult = BetTicketPrintResult

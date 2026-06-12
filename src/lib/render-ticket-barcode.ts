@@ -14,15 +14,29 @@ export function ticketCodeToBarcodeDataUrl(code: string): string {
   return canvas.toDataURL('image/png')
 }
 
-/** CODE128 PNG for compact 76×40mm cash ADV/REM slips. */
+/** CODE128 PNG for collector badges — narrow bars so COL codes fit 72mm printable width. */
+export function collectorCodeToBarcodeDataUrl(code: string): string {
+  const canvas = document.createElement('canvas')
+  JsBarcode(canvas, code, {
+    format: 'CODE128',
+    width: 2,
+    height: 56,
+    displayValue: false,
+    margin: 4,
+    background: '#ffffff'
+  })
+  return canvas.toDataURL('image/png')
+}
+
+/** CODE128 PNG for compact cash ADV/REM slips (72mm safe width). */
 export function cashSlipCodeToBarcodeDataUrl(code: string): string {
   const canvas = document.createElement('canvas')
   JsBarcode(canvas, code, {
     format: 'CODE128',
-    width: 2.4,
+    width: 2.2,
     height: 52,
     displayValue: false,
-    margin: 2,
+    margin: 4,
     background: '#ffffff'
   })
   return canvas.toDataURL('image/png')

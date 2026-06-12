@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
-import JsBarcode from 'jsbarcode'
 
 import { Button } from '@/components/ui/button'
 import { nativeModalDialogClassName } from '@/lib/nativeModalDialogClassName'
 import { printCollectorBadge } from '@/lib/print-collector-badge'
+import { collectorCodeToBarcodeDataUrl } from '@/lib/render-ticket-barcode'
 import type { Collector } from '@/types/api'
 
 export interface BarcodePrintDialogProps {
@@ -14,7 +14,10 @@ export interface BarcodePrintDialogProps {
 
 export function BarcodePrintDialog({ collector, onClose }: BarcodePrintDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const previewDataUrl = useMemo(
+    () => (collector ? collectorCodeToBarcodeDataUrl(collector.code) : null),
+    [collector]
+  )
 
   useEffect(() => {
     const d = dialogRef.current
@@ -26,25 +29,11 @@ export function BarcodePrintDialog({ collector, onClose }: BarcodePrintDialogPro
     }
   }, [collector])
 
-  useLayoutEffect(() => {
-    if (!collector || !canvasRef.current) return
-    const canvas = canvasRef.current
-    JsBarcode(canvas, collector.code, {
-      format: 'CODE128',
-      width: 2,
-      height: 100,
-      displayValue: true,
-      fontSize: 15,
-      margin: 12,
-      background: '#ffffff'
-    })
-  }, [collector?.id, collector?.code])
-
   async function handlePrint() {
-    if (!collector || !canvasRef.current) return
+    if (!collector || !previewDataUrl) return
     const ok = await printCollectorBadge({
       collector,
-      barcodePngDataUrl: canvasRef.current.toDataURL('image/png')
+      barcodePngDataUrl: previewDataUrl
     })
     if (!ok) {
       toast.error(
@@ -77,7 +66,13 @@ export function BarcodePrintDialog({ collector, onClose }: BarcodePrintDialogPro
             <p className="mt-0.5 font-mono text-sm font-medium text-foreground">{collector.code}</p>
           </div>
           <div className="flex flex-col items-center gap-4 px-6 py-6">
-            <canvas ref={canvasRef} key={collector.id} className="max-w-full" />
+            {previewDataUrl ? (
+              <img
+                src={previewDataUrl}
+                alt={collector.code}
+                className="max-h-32 max-w-full object-contain"
+              />
+            ) : null}
             <p className="text-center text-xs text-muted-foreground">
               80mm thermal layout. On the server PC with Electron, prints silently to the default
               printer. In a browser, opens a print preview. Cancel returns without printing.

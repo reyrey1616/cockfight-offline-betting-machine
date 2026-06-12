@@ -1,4 +1,4 @@
-/** Fields printed on 80mm thermal collector badges (XP-K200L and similar). */
+/** Fields printed on 80mm thermal collector badges. */
 export interface CollectorBadgeSlipFields {
   name: string
   code: string
@@ -13,71 +13,98 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** Shared slip CSS — keep in sync with desktop `electron/print-collector-badge.mjs`. */
+/** Matches bet-slip thermal layout (72mm safe width, compact barcode). */
 export const COLLECTOR_BADGE_SLIP_CSS = `
-    @page { margin: 0; size: 80mm auto; }
+    @page { margin: 0; size: 72mm auto; }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      padding: 2mm;
-      width: 80mm;
-      font-family: system-ui, -apple-system, sans-serif;
+      padding: 0;
+      width: 72mm;
+      max-width: 72mm;
+      overflow: visible;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       color: #000;
       background: #fff;
+      -webkit-font-smoothing: none;
+      font-smooth: never;
     }
     .slip {
-      width: 76mm;
-      height: 76mm;
-      margin: 0 auto;
+      width: 72mm;
+      max-width: 72mm;
+      height: auto;
+      max-height: 36mm;
+      margin: 0;
       border: 2px solid #000;
-      padding: 2mm;
+      padding: 1.5mm 1.5mm 1mm;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      gap: 1.5mm;
+      gap: 0.5mm;
+      overflow: visible;
     }
     .barcode-wrap {
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       min-height: 0;
-      padding: 1mm 0;
+      max-height: 20mm;
+      padding: 0.25mm 1mm 0;
+      overflow: visible;
+      gap: 0.25mm;
     }
     .barcode {
       display: block;
       width: 100%;
       max-width: 100%;
-      max-height: 100%;
+      max-height: 14mm;
       height: auto;
       object-fit: contain;
+      image-rendering: pixelated;
+    }
+    .barcode-code {
+      margin: 0;
+      padding: 0;
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.1em;
+      text-align: center;
+      text-transform: uppercase;
     }
     .meta {
       flex: 0 0 auto;
       width: 100%;
-      padding: 0 1mm 0.5mm;
+      min-width: 0;
+      overflow: hidden;
     }
     .line {
       margin: 0;
-      font-size: 9px;
-      line-height: 1.35;
-      text-align: left;
+      font-size: 12px;
+      line-height: 1.15;
+      text-align: center;
       word-break: break-word;
+      overflow-wrap: anywhere;
     }
-    .line + .line { margin-top: 1mm; }
-    .label {
-      font-weight: 700;
-      text-transform: none;
-    }
-    .value {
-      font-size: 10px;
-      font-weight: 600;
-    }
-    .code-value {
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
+    .label { font-weight: 800; }
+    .value { font-size: 13px; font-weight: 700; }
+    @media print {
+      html, body {
+        width: 72mm !important;
+        height: auto !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .slip {
+        width: 72mm;
+        height: auto;
+        max-height: 36mm;
+        overflow: visible;
+      }
     }
 `
 
@@ -96,10 +123,10 @@ export function buildCollectorBadgeSlipHtml(fields: CollectorBadgeSlipFields): s
   <div class="slip">
     <div class="barcode-wrap">
       <img class="barcode" src="${fields.barcodePngDataUrl}" alt="${code}" />
+      <p class="barcode-code">${code}</p>
     </div>
     <div class="meta">
       <p class="line"><span class="label">Collector:</span> <span class="value">${name}</span></p>
-      <p class="line"><span class="label">Code:</span> <span class="value code-value">${code}</span></p>
     </div>
   </div>
 </body>

@@ -61,9 +61,10 @@ function printViaBrowserWindow(fields: ReturnType<typeof buildSlipFields>): bool
 export async function printCashSlip(input: CashSlipPrintInput): Promise<boolean> {
   if (!input.code?.trim()) return false
   const fields = buildSlipFields(input)
+  const html = buildCashSlipHtml(fields)
   const api = window.electronAPI
   if (hasElectronPrintBridge() && api) {
-    const result = await api.printCashSlip(fields)
+    const result = await api.printCashSlip({ html })
     return result.ok
   }
   warnIfBrowserPrintFallback()

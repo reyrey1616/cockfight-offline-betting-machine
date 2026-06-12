@@ -13,5 +13,7 @@ describe('buildCollectorBadgeSlipHtml', () => {
     expect(html).toContain('COL-ABC12')
     expect(html).toContain('data:image/png;base64,abc')
     expect(html).toContain('Collector:')
+    expect(html).toContain('class="barcode-code"')
+    expect(html).toContain('72mm')
   })
 })

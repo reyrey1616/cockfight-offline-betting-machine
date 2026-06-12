@@ -34,10 +34,11 @@ describe('printCollectorBadge', () => {
     })
 
     expect(ok).toBe(true)
-    expect(printCollectorBadge).toHaveBeenCalledWith({
-      name: 'A',
-      code: 'COL-TEST1',
-      barcodePngDataUrl: 'data:image/png;base64,x'
-    })
+    expect(printCollectorBadge).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: expect.stringContaining('COL-TEST1')
+      })
+    )
+    expect(printCollectorBadge.mock.calls[0][0].html).toContain('class="barcode-code"')
   })
 })

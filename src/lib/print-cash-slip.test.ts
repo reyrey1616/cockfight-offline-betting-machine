@@ -42,12 +42,12 @@ describe('printCashSlip', () => {
     expect(ok).toBe(true)
     expect(printCashSlipIpc).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: 'deposit',
-        code: 'ADV12345',
-        collectorName: 'Collector A',
-        barcodePngDataUrl: 'data:image/png;base64,test'
+        html: expect.stringContaining('Cash deposit')
       })
     )
+    expect(printCashSlipIpc.mock.calls[0][0].html).toContain('ADV12345')
+    expect(printCashSlipIpc.mock.calls[0][0].html).toContain('Collector A')
+    expect(printCashSlipIpc.mock.calls[0][0].html).toContain('Date &amp; time:')
   })
 
   it('returns false when code is missing', async () => {
