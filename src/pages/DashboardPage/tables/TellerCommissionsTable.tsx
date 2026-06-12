@@ -13,6 +13,12 @@ function sumMoneyStrings(values: string[]): string {
   return (cents / 100).toFixed(2)
 }
 
+/** House share is half of the gross commission pool (both sides). */
+function formatHalvedCommission(commission: string): string {
+  const halved = Number(commission) / 2
+  return Number.isFinite(halved) ? formatMoney(String(halved.toFixed(2))) : '—'
+}
+
 /** Compact table chrome — commission card only. */
 const compact = {
   scroll: 'h-[clamp(100px,18dvh,9.5rem)] overflow-y-auto overflow-x-auto',
@@ -65,7 +71,9 @@ export function TellerCommissionsTable({
   return (
     <Card className={dash.card(panelClassName)}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 px-2 py-1.5">
-        <CardTitle className="text-xs font-semibold leading-tight tracking-tight">Commission</CardTitle>
+        <CardTitle className="text-xs font-semibold leading-tight tracking-tight">
+          Commissions by teller
+        </CardTitle>
         <span className={cn(dash.liveBadge, 'px-1 py-0 text-[8px]')}>Live</span>
       </CardHeader>
       <CardContent className="flex flex-col p-0">
@@ -116,7 +124,7 @@ export function TellerCommissionsTable({
                     <td className={compact.tdNum}>{t.betCount}</td>
                     <td className={compact.tdNum}>{formatMoney(t.grossHandle)}</td>
                     <td className={`${compact.tdNum} text-primary`}>
-                      {formatMoney(t.commissionGenerated)}
+                      {formatHalvedCommission(t.commissionGenerated)}
                     </td>
                   </tr>
                 ))
@@ -128,7 +136,7 @@ export function TellerCommissionsTable({
           <div className={compact.summary}>
             <span className="text-muted-foreground">Total</span>
             <span className="tabular-nums text-primary">
-              {q.isLoading || q.isError ? '—' : formatMoney(totalCommission)}
+              {q.isLoading || q.isError ? '—' : formatHalvedCommission(totalCommission)}
             </span>
           </div>
         ) : null}

@@ -12,6 +12,11 @@ vi.mock('@/lib/api-bets', () => ({
 }))
 
 const payMutate = vi.fn()
+const mockUseCashBalance = vi.fn(() => ({
+  data: { balance: '10000.00' },
+  isPending: false,
+  isError: false
+}))
 
 vi.mock('@/hooks/usePayBet', () => ({
   usePayBet: () => ({
@@ -21,7 +26,8 @@ vi.mock('@/hooks/usePayBet', () => ({
 }))
 
 vi.mock('@/hooks/useCash', () => ({
-  useSetCashBalance: () => vi.fn()
+  useSetCashBalance: () => vi.fn(),
+  useCashBalance: () => mockUseCashBalance()
 }))
 
 import { getBetByCode } from '@/lib/api-bets'
@@ -61,5 +67,40 @@ describe('PayoutMachinePage', () => {
       expect(mockGetBetByCode).toHaveBeenCalledWith('QKY6ULIT')
     })
     expect(await screen.findByText(/pay customer/i)).toBeInTheDocument()
+  })
+
+  it('blocks payout when cash on hand is short', async () => {
+    const user = userEvent.setup()
+    mockUseCashBalance.mockReturnValue({
+      data: { balance: '50.00' },
+      isPending: false,
+      isError: false
+    })
+    mockGetBetByCode.mockResolvedValue({
+      bet: makeBetRow({
+        code: 'QKY6ULIT',
+        status: 'WON',
+        payoutAmount: '270.00',
+        side: 'WALA'
+      }),
+      fight: {
+        id: 'fight-1',
+        fightNumber: 12,
+        status: 'SETTLED',
+        outcome: 'WALA',
+        meronPool: '300.00',
+        walaPool: '200.00',
+        meronOdds: 1.6,
+        walaOdds: 2.35,
+        payoutRatioMeron: null,
+        payoutRatioWala: '1.3500'
+      }
+    })
+
+    renderWithProviders(<PayoutMachinePage />)
+    await user.type(screen.getByLabelText(/reference code/i), 'QKY6ULIT')
+
+    expect(await screen.findByText(/cash on hand is short/i)).toBeInTheDocument()
+    expect(screen.queryByText(/pay customer/i)).not.toBeInTheDocument()
   })
 })

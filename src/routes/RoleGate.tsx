@@ -1,15 +1,6 @@
-// RoleGate — declarative role guard. Wrap inside <ProtectedRoute>
-// to additionally restrict a sub-tree to specific roles:
-//
-//   <Route element={<RoleGate allow={['ADMIN']} />}>
-//     <Route path="/admin/*" element={<AdminLayout />} />
-//   </Route>
-//
-// Users without the role see a small "Forbidden" stub. We do not
-// redirect away — the user is logged in, just not authorized; sending
-// them to /login would be wrong and noisy.
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 
+import { roleDefaultPath } from '@/lib/post-login-redirect'
 import { useAuthUser } from '@/store/auth'
 import type { UserRole } from '@/types/api'
 
@@ -23,14 +14,7 @@ export function RoleGate({ allow }: RoleGateProps) {
     return null
   }
   if (!allow.includes(user.role)) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 p-6 text-center">
-        <h1 className="text-2xl font-semibold">Forbidden</h1>
-        <p className="text-sm text-muted-foreground">
-          You don&apos;t have access to this page.
-        </p>
-      </div>
-    )
+    return <Navigate to={roleDefaultPath(user.role)} replace />
   }
   return <Outlet />
 }

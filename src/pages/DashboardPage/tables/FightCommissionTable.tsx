@@ -8,6 +8,16 @@ import { getFightCommissions } from '@/lib/api-reports'
 import type { FightCommissionsTotals } from '@/types/api'
 import { cn } from '@/lib/utils'
 
+const fightCommissionColgroup = (
+  <colgroup>
+    <col style={{ width: '8%' }} />
+    <col style={{ width: '14%' }} />
+    <col style={{ width: '27%' }} />
+    <col style={{ width: '27%' }} />
+    <col style={{ width: '24%' }} />
+  </colgroup>
+)
+
 const compact = {
   scroll: 'max-h-[clamp(120px,22dvh,11rem)] overflow-y-auto overflow-x-auto',
   table: 'w-full table-fixed text-center text-[10px]',
@@ -26,16 +36,40 @@ function formatOutcome(status: string, outcome: string | null): string {
   return status.replace(/_/g, ' ')
 }
 
+/** House share is half of the gross commission pool (both sides). */
+function formatHalvedCommission(commission: string): string {
+  const halved = Number(commission) / 2
+  return Number.isFinite(halved) ? formatMoney(String(halved.toFixed(2))) : '—'
+}
+
 function FightCommissionTotalsBar({ totals }: { totals: FightCommissionsTotals }) {
+  const totalCell = cn(compact.td, 'py-1.5 font-semibold')
+
   return (
-    <div className={cn(dash.summaryBar, 'grid grid-cols-5 text-center')}>
-      <span className="col-span-2 text-left">
-        {totals.fightCount} fight{totals.fightCount === 1 ? '' : 's'}
-      </span>
-      <span>{formatMoney(totals.grossHandle)}</span>
-      <span>{formatMoney(totals.commission)}</span>
-      <span>{totals.betCount}</span>
-    </div>
+    <table className={cn(compact.table, dash.summaryBar)}>
+      {fightCommissionColgroup}
+      <tbody>
+        <tr>
+          <td className={totalCell}>
+            <span className="block text-[9px] font-normal text-muted-foreground">Total fights</span>
+            {totals.fightCount}
+          </td>
+          <td className={totalCell} />
+          <td className={totalCell}>
+            <span className="block text-[9px] font-normal text-muted-foreground">Total bets</span>
+            {formatMoney(totals.grossHandle)}
+          </td>
+          <td className={totalCell}>
+            <span className="block text-[9px] font-normal text-muted-foreground">Total commission</span>
+            {formatHalvedCommission(totals.commission)}
+          </td>
+          <td className={totalCell}>
+            <span className="block text-[9px] font-normal text-muted-foreground">Bet count</span>
+            {totals.betCount}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   )
 }
 
@@ -61,13 +95,7 @@ export function FightCommissionTable({
 
   const table = (
     <table className={compact.table}>
-      <colgroup>
-        <col style={{ width: '8%' }} />
-        <col style={{ width: '14%' }} />
-        <col style={{ width: '27%' }} />
-        <col style={{ width: '27%' }} />
-        <col style={{ width: '24%' }} />
-      </colgroup>
+      {fightCommissionColgroup}
       <thead className={compact.thead}>
         <tr className="border-b border-border/60">
           <th className={compact.th}>#</th>
@@ -114,7 +142,7 @@ export function FightCommissionTable({
               </td>
               <td className={compact.td}>{formatOutcome(f.status, f.outcome)}</td>
               <td className={compact.td}>{formatMoney(f.grossHandle)}</td>
-              <td className={compact.td}>{formatMoney(f.commission)}</td>
+              <td className={compact.td}>{formatHalvedCommission(f.commission)}</td>
               <td className={compact.td}>
                 <span className="block">{f.betCount}</span>
                 {f.pendingBetCount > 0 ? (

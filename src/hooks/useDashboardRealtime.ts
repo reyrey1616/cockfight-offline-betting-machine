@@ -44,7 +44,7 @@ export type DashboardWsStatus =
  * tables can invalidate TanStack Query without polling.
  *
  * Live tables: betting activity, teller balances, payout ledger, winning (unpaid) tickets,
- * per-teller commission (admin).
+ * cancelled tickets, per-teller commission (admin).
  */
 export function useDashboardRealtime() {
   const token = useAuthToken()

@@ -2,9 +2,8 @@
 //
 // Single shadcn Card containing username + password. On submit calls
 // the /auth/login mutation; on success the auth store gets populated
-// and we Navigate back to the user's originally-requested URL (carried
-// in location.state.from by ProtectedRoute), or a role default (`/dashboard`
-// for admin, `/kiosk` for teller) when they open /login directly.
+// and we Navigate to a role-safe post-login URL: honor `from` only when that
+// role may access it; otherwise `/dashboard` (admin) or `/kiosk` (teller).
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 
@@ -27,6 +26,7 @@ import {
   normalizeApiBaseUrlInput,
   setStoredApiBaseUrl
 } from '@/lib/api-base-url'
+import { resolvePostLoginPath } from '@/lib/post-login-redirect'
 import { useAuthUser, useIsAuthenticated } from '@/store/auth'
 
 interface LocationState {
@@ -38,9 +38,8 @@ export function LoginPage() {
   const user = useAuthUser()
   const location = useLocation()
   const fromState = (location.state as LocationState | null) ?? null
-  const roleDefault = user?.role === 'ADMIN' ? '/dashboard' : '/kiosk'
-  const fallback =
-    fromState?.from && fromState.from !== '/login' ? fromState.from : roleDefault
+  const postLoginPath =
+    user != null ? resolvePostLoginPath(user.role, fromState?.from) : '/login'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -49,7 +48,7 @@ export function LoginPage() {
   const { mutate, isPending, error } = useLogin()
 
   if (isAuthed) {
-    return <Navigate to={fallback} replace />
+    return <Navigate to={postLoginPath} replace />
   }
 
   function persistServerUrl(): boolean {

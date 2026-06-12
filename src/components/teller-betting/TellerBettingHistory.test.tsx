@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { TellerBettingHistory } from '@/components/teller-betting/TellerBettingHistory'
-import { makeBetRow, makeFight, tellerUser } from '@/test/fixtures'
+import { makeBetListRow, makeBetRow, makeFight, tellerUser } from '@/test/fixtures'
 import { renderWithProviders, seedAuth } from '@/test/render'
 
 const voidMutate = vi.fn()
@@ -60,7 +60,7 @@ describe('TellerBettingHistory', () => {
 
   it('lists bet codes when data is loaded', async () => {
     mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ code: 'TKT00001', amount: '250.00' })],
+      bets: [makeBetListRow({ code: 'TKT00001', amount: '250.00' })],
       nextCursor: null
     })
 
@@ -73,7 +73,7 @@ describe('TellerBettingHistory', () => {
   it('opens admin auth dialog after scanning a cancellable ticket', async () => {
     const user = userEvent.setup()
     mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
+      bets: [makeBetListRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
       nextCursor: null
     })
     mockGetBetByCode.mockResolvedValue({
@@ -95,7 +95,7 @@ describe('TellerBettingHistory', () => {
   it('voids ticket after admin barcode scan', async () => {
     const user = userEvent.setup()
     mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
+      bets: [makeBetListRow({ id: 'bet-void-1', code: 'TKT99999', status: 'PENDING' })],
       nextCursor: null
     })
     mockGetBetByCode.mockResolvedValue({
@@ -122,7 +122,7 @@ describe('TellerBettingHistory', () => {
 
   it('does not show per-row cancel buttons', async () => {
     mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ status: 'PENDING' })],
+      bets: [makeBetListRow({ status: 'PENDING' })],
       nextCursor: null
     })
 
@@ -135,7 +135,7 @@ describe('TellerBettingHistory', () => {
 
   it('shows scan input when fight is closed', async () => {
     mockListBets.mockResolvedValue({
-      bets: [makeBetRow({ status: 'PENDING' })],
+      bets: [makeBetListRow({ status: 'PENDING' })],
       nextCursor: null
     })
 
@@ -148,7 +148,7 @@ describe('TellerBettingHistory', () => {
   it('reprints a ticket from history', async () => {
     const user = userEvent.setup()
     reprintBetTicket.mockResolvedValue(true)
-    const bet = makeBetRow({ id: 'bet-reprint', code: 'TKT00001' })
+    const bet = makeBetListRow({ id: 'bet-reprint', code: 'TKT00001' })
     mockListBets.mockResolvedValue({ bets: [bet], nextCursor: null })
 
     seedAuth(tellerUser)

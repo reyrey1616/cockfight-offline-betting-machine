@@ -2,23 +2,32 @@ import { useMemo } from 'react'
 
 import { ApiError } from '@/lib/api'
 import {
-  boardOddsForSide,
   buildFightBoardTicker,
   deriveFightHistory,
   deriveSessionStats,
   FIGHT_BOARD_HISTORY_FETCH_MAX,
-  isSideHeld
+  isSideHeld,
+  resolveBoardOddsForSide
 } from '@/lib/fight-board-derive'
 import { useFightLiveState } from '@/hooks/useFightLiveState'
 import { useRecentFightsBoard } from '@/hooks/useRecentFightsBoard'
+import { useSettings } from '@/hooks/useSettings'
 
 /**
  * Shared fight-board data for `/display`, Operate fights, and the teller
  * live desk — keeps a single `useFightLiveState` subscription per screen.
  */
+const DEFAULT_COMMISSION_RATE = '0.1500'
+
 export function useFightBoardViewModel() {
   const { fight, wsStatus, lastWsError, applyServerFight, fightsQuery } = useFightLiveState()
   const recentQuery = useRecentFightsBoard()
+  const settingsQuery = useSettings()
+
+  const commissionRate =
+    fight?.commissionRate ??
+    settingsQuery.data?.setting.commissionRate ??
+    DEFAULT_COMMISSION_RATE
 
   const loading = fightsQuery.isPending && fight == null
   const loadError =
@@ -54,8 +63,8 @@ export function useFightBoardViewModel() {
     tickerMessage,
     meronPool: fight?.meronPool ?? '0.00',
     walaPool: fight?.walaPool ?? '0.00',
-    meronOdds: boardOddsForSide(fight, 'MERON'),
-    walaOdds: boardOddsForSide(fight, 'WALA'),
+    meronOdds: resolveBoardOddsForSide(fight, 'MERON', commissionRate),
+    walaOdds: resolveBoardOddsForSide(fight, 'WALA', commissionRate),
     fightNumber: fight?.fightNumber ?? null,
     fightStatus: fight?.status ?? null,
     meronSideHeld,

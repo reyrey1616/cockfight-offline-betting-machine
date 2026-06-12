@@ -1,5 +1,6 @@
 import type {
   AdminUser,
+  BetListRow,
   BetRow,
   CashBalanceResponse,
   CashMutationResponse,
@@ -158,6 +159,19 @@ export function makeBetRow(overrides: Partial<BetRow> = {}): BetRow {
     correctedAt: null,
     createdAt: '2026-05-15T12:00:00.000Z',
     updatedAt: '2026-05-15T12:00:00.000Z',
+    ...overrides
+  }
+}
+
+export function makeBetListRow(overrides: Partial<BetListRow> = {}): BetListRow {
+  return {
+    ...makeBetRow(overrides),
+    fightNumber: 1,
+    fightStatus: 'OPEN',
+    meronOdds: null,
+    walaOdds: null,
+    payoutRatioMeron: null,
+    payoutRatioWala: null,
     ...overrides
   }
 }

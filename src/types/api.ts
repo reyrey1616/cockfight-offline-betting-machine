@@ -400,7 +400,7 @@ export type BetStatusWire =
 
 export type BetSideWire = 'MERON' | 'WALA'
 
-/** Row from `GET /bets` — matches `betSchema` on the API. */
+/** Row from `GET /bets` detail payloads — matches `betSchema` on the API. */
 export interface BetRow {
   id: string
   code: string
@@ -425,6 +425,16 @@ export interface BetRow {
   updatedAt: string
 }
 
+/** `GET /bets` list rows include joined fight context for dashboards. */
+export interface BetListRow extends BetRow {
+  fightNumber: number
+  fightStatus: FightStatusValue
+  meronOdds: number | null
+  walaOdds: number | null
+  payoutRatioMeron: string | null
+  payoutRatioWala: string | null
+}
+
 export interface ListBetsQuery {
   fightId?: string
   tellerId?: string
@@ -436,7 +446,7 @@ export interface ListBetsQuery {
 }
 
 export interface ListBetsResponse {
-  bets: BetRow[]
+  bets: BetListRow[]
   nextCursor: string | null
 }
 

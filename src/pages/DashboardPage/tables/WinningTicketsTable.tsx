@@ -5,9 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BET_SIDE_LABEL } from '@/constants'
 import { dash, fmtWhenShort } from '@/pages/DashboardPage/dashboard-dense'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
+import { boardOddsForSide, formatBoardOdds } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import { listBets } from '@/lib/api-bets'
+import type { BetListRow } from '@/types/api'
 import { cn } from '@/lib/utils'
+
+function formatBetOdds(bet: BetListRow): string {
+  const odds = boardOddsForSide(
+    {
+      status: bet.fightStatus,
+      meronOdds: bet.meronOdds,
+      walaOdds: bet.walaOdds,
+      payoutRatioMeron: bet.payoutRatioMeron,
+      payoutRatioWala: bet.payoutRatioWala
+    },
+    bet.side
+  )
+  return formatBoardOdds(odds)
+}
+
+function formatBetPayout(bet: BetListRow): string {
+  if (bet.payoutAmount == null || bet.payoutAmount === '') return '—'
+  return formatMoney(bet.payoutAmount)
+}
 
 export interface WinningTicketsTableProps {
   tellerId?: string
@@ -35,10 +56,12 @@ export function WinningTicketsTable({
 
   const bets = q.data?.bets ?? []
 
-  const totalAmount = useMemo(
-    () => bets.reduce((sum, b) => sum + Number(b.amount), 0),
+  const totalPayout = useMemo(
+    () => bets.reduce((sum, b) => sum + Number(b.payoutAmount ?? 0), 0),
     [bets]
   )
+
+  const columnCount = 7
 
   return (
     <Card className={dash.card(panelClassName)}>
@@ -48,11 +71,23 @@ export function WinningTicketsTable({
       </CardHeader>
       <CardContent className="flex flex-col p-0">
         <div className={dash.bodyScroll}>
-          <table className={dash.table}>
+          <table className={cn(dash.table, 'table-fixed')}>
+            <colgroup>
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '30%' }} />
+            </colgroup>
             <thead className={dash.thead}>
               <tr className="border-b border-border/60">
                 <th className={dash.th}>Code</th>
-                <th className={dash.th}>Amount</th>
+                <th className={`${dash.th} text-right`}>Amount</th>
+                <th className={`${dash.th} text-center`}>Odds</th>
+                <th className={`${dash.th} text-right`}>Payout</th>
+                <th className={`${dash.th} text-center`}>Fight #</th>
                 <th className={dash.th}>Side</th>
                 <th className={dash.th}>When / teller</th>
               </tr>
@@ -60,27 +95,30 @@ export function WinningTicketsTable({
             <tbody>
               {q.isLoading ? (
                 <tr>
-                  <td colSpan={4} className={dash.empty}>
+                  <td colSpan={columnCount} className={dash.empty}>
                     Loading…
                   </td>
                 </tr>
               ) : q.isError ? (
                 <tr>
-                  <td colSpan={4} className={`${dash.empty} text-destructive`}>
+                  <td colSpan={columnCount} className={`${dash.empty} text-destructive`}>
                     Could not load winning tickets.
                   </td>
                 </tr>
               ) : bets.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className={dash.empty}>
+                  <td colSpan={columnCount} className={dash.empty}>
                     No unpaid winners.
                   </td>
                 </tr>
               ) : (
                 bets.map((b) => (
                   <tr key={b.id} className={dash.row}>
-                    <td className={`${dash.td} font-mono font-semibold`}>{b.code}</td>
-                    <td className={dash.tdNum}>{formatMoney(b.amount)}</td>
+                    <td className={`${dash.td} font-mono text-[11px] font-semibold`}>{b.code}</td>
+                    <td className={`${dash.tdNum} text-right`}>{formatMoney(b.amount)}</td>
+                    <td className={`${dash.tdNum} text-center`}>{formatBetOdds(b)}</td>
+                    <td className={`${dash.tdNum} text-right font-medium`}>{formatBetPayout(b)}</td>
+                    <td className={`${dash.tdNum} text-center font-semibold`}>{b.fightNumber}</td>
                     <td className={dash.td}>{BET_SIDE_LABEL[b.side]}</td>
                     <td className={`${dash.td} text-muted-foreground`}>
                       <div>{fmtWhenShort(b.createdAt)}</div>
@@ -95,10 +133,15 @@ export function WinningTicketsTable({
           </table>
         </div>
         <div className={cn(dash.summaryBar, 'flex items-center justify-between gap-2')}>
-          <span>
+          <span className="text-muted-foreground">
             {bets.length} ticket{bets.length === 1 ? '' : 's'}
           </span>
-          <span>{formatMoney(totalAmount.toFixed(2))}</span>
+          <span className="flex items-baseline gap-2">
+            <span className="text-muted-foreground">Total payout</span>
+            <span className="text-sm font-bold tabular-nums text-primary">
+              {Number.isFinite(totalPayout) ? formatMoney(String(totalPayout.toFixed(2))) : '—'}
+            </span>
+          </span>
         </div>
       </CardContent>
     </Card>

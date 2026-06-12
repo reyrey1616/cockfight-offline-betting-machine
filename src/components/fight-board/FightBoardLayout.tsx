@@ -139,8 +139,8 @@ function sideOddsDisplay(
 ): ReactNode {
   const oddsText = formatBoardOdds(odds)
   const oddsClass = cn(
-    'font-black tabular-nums tracking-tight text-black',
-    bettingOpen ? 'text-4xl lg:text-5xl' : 'text-3xl text-zinc-800 lg:text-4xl'
+    'font-black tabular-nums tracking-tight text-orange-400',
+    bettingOpen ? 'text-4xl lg:text-5xl' : 'text-3xl lg:text-4xl'
   )
   if (sideHeld) {
     return (
@@ -152,7 +152,7 @@ function sideOddsDisplay(
           No new {heldLabel} bets (admin)
         </p>
         {odds != null ? (
-          <p className={cn(oddsClass, 'text-zinc-600')}>{oddsText}</p>
+          <p className={cn(oddsClass, 'text-orange-300')}>{oddsText}</p>
         ) : null}
       </div>
     )

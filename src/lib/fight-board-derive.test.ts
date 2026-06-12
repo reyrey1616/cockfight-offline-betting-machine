@@ -3,10 +3,15 @@ import { describe, expect, it } from 'vitest'
 import {
   boardOddsForSide,
   buildFightBoardTicker,
+  computePayoutFromOdds,
+  defaultBoardOddsMultiplier,
   deriveFightHistory,
   deriveSessionStats,
   fightBoardHistoryViewportHeight,
+  floorPayoutMultiplier,
   formatBoardOdds,
+  resolveBoardOddsForSide,
+  scaledBoardOdds,
   settledOddsForSide,
   formatFightLabel,
   FIGHT_BOARD_HISTORY_FETCH_MAX,
@@ -82,11 +87,26 @@ describe('deriveFightHistory', () => {
 })
 
 describe('formatBoardOdds', () => {
-  it('formats odds as integer without decimal point (floor × 100)', () => {
-    expect(formatBoardOdds(1.64)).toBe('164')
-    expect(formatBoardOdds(1.7259)).toBe('172')
-    expect(formatBoardOdds(1.2)).toBe('120')
+  it('scales ratio ×100 and floors to 2 decimals for display', () => {
+    expect(formatBoardOdds(1.94257)).toBe('194.25')
+    expect(formatBoardOdds(1.64)).toBe('164.00')
+    expect(formatBoardOdds(1.7259)).toBe('172.59')
+    expect(formatBoardOdds(1.2)).toBe('120.00')
     expect(formatBoardOdds(null)).toBe('—')
+  })
+})
+
+describe('floorPayoutMultiplier', () => {
+  it('matches scaled display ÷ 100', () => {
+    expect(floorPayoutMultiplier(1.94257)).toBe(1.9425)
+    expect(scaledBoardOdds(1.94257)).toBe(194.25)
+  })
+})
+
+describe('computePayoutFromOdds', () => {
+  it('multiplies stake by the floored payout multiplier', () => {
+    expect(computePayoutFromOdds(100, 1.94257)).toBe(194.25)
+    expect(computePayoutFromOdds(100, 1.71)).toBe(171)
   })
 })
 
@@ -99,6 +119,35 @@ describe('settledOddsForSide', () => {
     }
     expect(settledOddsForSide(fight, 'WALA')).toBe(2.35)
     expect(settledOddsForSide(fight, 'MERON')).toBe(1.8123)
+  })
+})
+
+describe('defaultBoardOddsMultiplier', () => {
+  it('uses even-split pari-mutuel formula from commission rate', () => {
+    expect(defaultBoardOddsMultiplier(0.15)).toBe(1.85)
+    expect(formatBoardOdds(defaultBoardOddsMultiplier(0.15))).toBe('185.00')
+    expect(defaultBoardOddsMultiplier('0.1000')).toBe(1.9)
+    expect(formatBoardOdds(defaultBoardOddsMultiplier('0.1000'))).toBe('190.00')
+  })
+})
+
+describe('resolveBoardOddsForSide', () => {
+  it('falls back to default when no fight or empty pools', () => {
+    expect(resolveBoardOddsForSide(null, 'MERON', 0.15)).toBe(1.85)
+    const openEmpty = makeFight({
+      status: 'OPEN',
+      meronPool: '0',
+      walaPool: '0',
+      meronOdds: null,
+      walaOdds: null,
+      commissionRate: '0.1500'
+    })
+    expect(resolveBoardOddsForSide(openEmpty, 'WALA', openEmpty.commissionRate)).toBe(1.85)
+  })
+
+  it('keeps live odds when the API provides them', () => {
+    const fight = makeFight({ status: 'OPEN', meronOdds: 2.45, walaOdds: 1.88 })
+    expect(resolveBoardOddsForSide(fight, 'MERON', fight.commissionRate)).toBe(2.45)
   })
 })
 

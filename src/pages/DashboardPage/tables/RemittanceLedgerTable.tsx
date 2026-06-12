@@ -41,7 +41,7 @@ export function RemittanceLedgerTable({
   return (
     <Card className={dash.card(panelClassName)}>
       <CardHeader className={dash.header}>
-        <CardTitle className={dash.title}>Remittance / income</CardTitle>
+        <CardTitle className={dash.title}>Teller&apos;s remittances</CardTitle>
         <Button
           type="button"
           variant="outline"

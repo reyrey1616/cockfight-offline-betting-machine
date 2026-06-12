@@ -11,7 +11,9 @@ import { getBetByCode } from '@/lib/api-bets'
 import { formatBoardOdds, settledOddsForSide } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import { disqualificationMessage, isPayableWin } from '@/lib/payout-eligibility'
+import { checkPayoutCashOnHand } from '@/lib/payout-cash-eligibility'
 import { usePayBet } from '@/hooks/usePayBet'
+import { useCashBalance } from '@/hooks/useCash'
 import { useAuthUser } from '@/store/auth'
 import type { BetRow, PlaceBetFightSummary } from '@/types/api'
 import { isCompleteTicketCode, sanitizeTicketInput, TICKET_CODE_MAX } from '@/pages/PayoutMachinePage/payout-scan'
@@ -36,6 +38,7 @@ function DetailLine({ label, children }: { label: string; children: ReactNode })
  */
 export function PayoutMachinePage() {
   const actor = useAuthUser()
+  const cashBalanceQuery = useCashBalance()
   const payBetMutation = usePayBet()
   const inputRef = useRef<HTMLInputElement>(null)
   const errorDialogRef = useRef<HTMLDialogElement>(null)
@@ -92,6 +95,11 @@ export function PayoutMachinePage() {
         return
       }
       if (isPayableWin(bet, fight)) {
+        const cashCheck = checkPayoutCashOnHand(cashBalanceQuery.data?.balance, bet.payoutAmount)
+        if (!cashCheck.ok) {
+          setDialogMessage(cashCheck.message ?? 'Payout cannot be done — cash on hand is short.')
+          return
+        }
         errorDialogRef.current?.close()
         setDialogMessage(null)
         setPayable({ bet, fight })
@@ -140,6 +148,16 @@ export function PayoutMachinePage() {
 
   function handleConfirmPaid() {
     if (!payable) return
+    const cashCheck = checkPayoutCashOnHand(
+      cashBalanceQuery.data?.balance,
+      payable.bet.payoutAmount
+    )
+    if (!cashCheck.ok) {
+      successDialogRef.current?.close()
+      setPayable(null)
+      setDialogMessage(cashCheck.message ?? 'Payout cannot be done — cash on hand is short.')
+      return
+    }
     payBetMutation.mutate(payable.bet.id, {
       onSuccess: (res) => {
         toast.success(res.replay ? 'Already marked as paid.' : 'Payout recorded.', { duration: 2200 })
@@ -157,6 +175,11 @@ export function PayoutMachinePage() {
   const payoutOddsDisplay = formatBoardOdds(payoutOdds)
   const payoutAmountDisplay =
     payable?.bet.payoutAmount != null ? formatMoney(payable.bet.payoutAmount) : '—'
+  const payoutCashCheck =
+    payable != null
+      ? checkPayoutCashOnHand(cashBalanceQuery.data?.balance, payable.bet.payoutAmount)
+      : null
+  const canConfirmPayout = payoutCashCheck?.ok ?? false
 
   return (
     <div className="space-y-4 p-4 pb-10">
@@ -267,10 +290,15 @@ export function PayoutMachinePage() {
             </div>
 
             <div className="flex justify-end border-t pt-4">
+              {!canConfirmPayout && payoutCashCheck?.message ? (
+                <p className="mr-auto max-w-[14rem] text-left text-xs text-destructive">
+                  {payoutCashCheck.message}
+                </p>
+              ) : null}
               <Button
                 type="button"
                 className="min-w-[8rem]"
-                disabled={payPending}
+                disabled={payPending || !canConfirmPayout}
                 onClick={() => void handleConfirmPaid()}
               >
                 {payPending ? 'Recording…' : 'Paid'}

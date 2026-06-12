@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { LoginPage } from '@/pages/LoginPage'
-import { adminUser } from '@/test/fixtures'
+import { adminUser, tellerUser } from '@/test/fixtures'
 import { renderWithProviders, seedAuth } from '@/test/render'
 
 const mutate = vi.fn()
@@ -20,6 +20,14 @@ describe('LoginPage', () => {
   it('redirects authenticated admin to dashboard', () => {
     seedAuth(adminUser)
     renderWithProviders(<LoginPage />, { route: '/login' })
+    expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument()
+  })
+
+  it('redirects teller away from saved admin URL to kiosk', () => {
+    seedAuth(tellerUser)
+    renderWithProviders(<LoginPage />, {
+      initialEntries: [{ pathname: '/login', state: { from: '/admin/collectors' } }]
+    })
     expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument()
   })
 

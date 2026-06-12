@@ -98,9 +98,10 @@ export function deriveFightHistory(
 }
 
 /**
- * Payout multiplier display on the board / payout desk:
- * - floor to 3 decimal places internally
- * - show as integer without decimal point (1.64 → "164")
+ * Payout odds display on the board / payout desk:
+ * - multiply ratio by 100 (1.94257 → 194.257)
+ * - floor the scaled value to 2 decimals (194.25)
+ * - payout uses the matching multiplier (194.25 ÷ 100 = 1.9425)
  */
 
 /** True when the fight is OPEN and admin has held a side (no new bets on that side). */
@@ -112,10 +113,25 @@ export function isSideHeld(
   return side === 'MERON' ? fight.meronAcceptingBets === false : fight.walaAcceptingBets === false
 }
 
+/** Effective payout multiplier after the scaled-odds floor rule. */
+export function floorPayoutMultiplier(odds: number): number {
+  return Math.floor(odds * 10000) / 10000
+}
+
+/** Scaled odds for display (×100, floored to 2 decimal places). */
+export function scaledBoardOdds(odds: number): number {
+  return Math.floor(odds * 10000) / 100
+}
+
 export function formatBoardOdds(odds: number | null): string {
   if (odds == null || !Number.isFinite(odds)) return '—'
-  const floored = floorToDecimals(odds, 3)
-  return String(Math.floor(floored * 100))
+  return scaledBoardOdds(odds).toFixed(2)
+}
+
+/** Payout amount for a stake using the floored payout multiplier. */
+export function computePayoutFromOdds(stake: number, odds: number): number {
+  const mult = floorPayoutMultiplier(odds)
+  return Math.round(stake * mult * 100) / 100
 }
 
 /** Settled fight payout multiplier from API decimal string. */
@@ -152,9 +168,26 @@ export function boardOddsForSide(
   return side === 'MERON' ? fight.meronOdds : fight.walaOdds
 }
 
-function floorToDecimals(value: number, decimals: number): number {
-  const factor = 10 ** decimals
-  return Math.floor(value * factor) / factor
+/**
+ * Even-split pari-mutuel payout before any pool exists: 2 × (1 − commission/2).
+ * At 15% commission → 1.85 → board display "185.00".
+ */
+export function defaultBoardOddsMultiplier(commissionRate: string | number): number {
+  const c = Number(commissionRate)
+  if (!Number.isFinite(c) || c < 0) return 2 * (1 - 0.15 / 2)
+  return 2 * (1 - c / 2)
+}
+
+/** Live/settled odds when known; otherwise the commission-based default payout. */
+export function resolveBoardOddsForSide(
+  fight: Pick<
+    Fight,
+    'status' | 'meronOdds' | 'walaOdds' | 'payoutRatioMeron' | 'payoutRatioWala'
+  > | null,
+  side: 'MERON' | 'WALA',
+  commissionRate: string | number
+): number {
+  return boardOddsForSide(fight, side) ?? defaultBoardOddsMultiplier(commissionRate)
 }
 
 export function buildFightBoardTicker(

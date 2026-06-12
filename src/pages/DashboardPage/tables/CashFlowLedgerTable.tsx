@@ -48,7 +48,7 @@ export function CashFlowLedgerTable({
   return (
     <Card className={dash.card(panelClassName)}>
       <CardHeader className={dash.header}>
-        <CardTitle className={dash.title}>Cash flow</CardTitle>
+        <CardTitle className={dash.title}>Teller&apos;s deposits</CardTitle>
         <Button
           type="button"
           variant="outline"
