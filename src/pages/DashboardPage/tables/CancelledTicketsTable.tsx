@@ -42,7 +42,7 @@ export function CancelledTicketsTable({
   })
 
   const bets = q.data?.bets ?? []
-  const columnCount = 5
+  const columnCount = 6
 
   const totalVoided = useMemo(
     () => bets.reduce((sum, b) => sum + Number(b.amount), 0),
@@ -64,16 +64,18 @@ export function CancelledTicketsTable({
         <div className={dash.bodyScroll}>
           <table className={cn(dash.table, 'table-fixed')}>
             <colgroup>
-              <col style={{ width: '22%' }} />
-              <col style={{ width: '14%' }} />
+              <col style={{ width: '20%' }} />
               <col style={{ width: '12%' }} />
-              <col style={{ width: '26%' }} />
-              <col style={{ width: '26%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '20%' }} />
             </colgroup>
             <thead className={dash.thead}>
               <tr className="border-b border-border/60">
                 <th className={dash.th}>Code</th>
                 <th className={dash.th}>Side</th>
+                <th className={`${dash.th} text-right`}>Amount</th>
                 <th className={`${dash.th} text-center`}>Fight #</th>
                 <th className={dash.th}>Teller</th>
                 <th className={dash.th}>Date</th>
@@ -105,6 +107,7 @@ export function CancelledTicketsTable({
                       {b.code}
                     </td>
                     <td className={dash.td}>{BET_SIDE_LABEL[b.side]}</td>
+                    <td className={`${dash.tdNum} text-right`}>{formatMoney(b.amount)}</td>
                     <td className={`${dash.tdNum} text-center font-semibold`}>{b.fightNumber}</td>
                     <td className={`${dash.td} font-medium`}>
                       {b.tellerNameSnapshot ?? resolveTellerName(b.tellerId)}

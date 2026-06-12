@@ -25,6 +25,7 @@ function buildSlipFields(input: PayoutReceiptPrintInput) {
   return {
     fightNumber: String(input.fight.fightNumber),
     bettingSide: BET_SIDE_LABEL[input.bet.side],
+    tellerName: input.bet.tellerNameSnapshot ?? '—',
     betAmount: formatMoney(input.bet.amount),
     odds: formatBoardOdds(settledOddsForSide(input.fight, input.bet.side)),
     payoutAmount: payout,

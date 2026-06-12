@@ -4,6 +4,7 @@ import { formatSlipTimestamp } from '@/lib/thermal-slip-76x60-css'
 export interface PayoutReceiptSlipFields {
   fightNumber: string
   bettingSide: string
+  tellerName: string
   betAmount: string
   odds: string
   payoutAmount: string
@@ -107,6 +108,7 @@ export const PAYOUT_RECEIPT_SLIP_CSS = `
 export function buildPayoutReceiptSlipHtml(fields: PayoutReceiptSlipFields): string {
   const fightNumber = escapeHtml(fields.fightNumber)
   const bettingSide = escapeHtml(fields.bettingSide)
+  const tellerName = escapeHtml(fields.tellerName.trim() || '—')
   const betAmount = escapeHtml(fields.betAmount)
   const odds = escapeHtml(fields.odds)
   const payoutAmount = escapeHtml(fields.payoutAmount)
@@ -125,6 +127,7 @@ export function buildPayoutReceiptSlipHtml(fields: PayoutReceiptSlipFields): str
     <div class="meta">
       <p class="line"><span class="label">Fight number:</span> <span class="value">${fightNumber}</span></p>
       <p class="line"><span class="label">Betting side:</span> <span class="value">${bettingSide}</span></p>
+      <p class="line"><span class="label">Teller:</span> <span class="value">${tellerName}</span></p>
       <p class="line"><span class="label">Bet:</span> <span class="value">${betAmount}</span></p>
       <p class="line"><span class="label">Odds:</span> <span class="value">${odds}</span></p>
       <p class="line"><span class="label">Payout:</span> <span class="value emphasis">${payoutAmount}</span></p>

@@ -21,7 +21,12 @@ describe('printPayoutReceipt', () => {
 
     const { printPayoutReceipt: printFn } = await import('@/lib/print-payout-receipt')
     const ok = await printFn({
-      bet: makeBetRow({ side: 'WALA', amount: '500.00', payoutAmount: '950.00' }),
+      bet: makeBetRow({
+        side: 'WALA',
+        amount: '500.00',
+        payoutAmount: '950.00',
+        tellerNameSnapshot: 'Joshua Castanares'
+      }),
       fight: makeFight({ fightNumber: 12, payoutRatioWala: '1.9000' })
     })
 
@@ -32,6 +37,8 @@ describe('printPayoutReceipt', () => {
       })
     )
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Fight number:')
+    expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Teller:')
+    expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Joshua Castanares')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Odds:')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('190')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Date &amp; time:')
