@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ChangeEvent } from 'react'
 
 import {
+  formatStakeDisplay,
   parseStakeInput,
   sanitizeStakeInput,
   stakeValidationMessage,
@@ -31,7 +32,7 @@ export function useTellerStakeDraft() {
   }, [])
 
   return {
-    rawDisplay: raw,
+    rawDisplay: formatStakeDisplay(raw),
     parsed,
     validationError,
     onInputChange,

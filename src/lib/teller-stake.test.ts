@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatStakeDisplay,
   parseStakeInput,
   sanitizeStakeInput,
   stakeToWireAmount,
@@ -18,6 +19,18 @@ describe('sanitizeStakeInput', () => {
     expect(sanitizeStakeInput('100.')).toBe('100.')
     expect(sanitizeStakeInput('100.999')).toBe('100.99')
     expect(sanitizeStakeInput('12.34.56')).toBe('12.34')
+  })
+})
+
+describe('formatStakeDisplay', () => {
+  it('adds thousand separators while preserving decimals', () => {
+    expect(formatStakeDisplay('100')).toBe('100')
+    expect(formatStakeDisplay('1000')).toBe('1,000')
+    expect(formatStakeDisplay('1234567')).toBe('1,234,567')
+    expect(formatStakeDisplay('1000.')).toBe('1,000.')
+    expect(formatStakeDisplay('1000.5')).toBe('1,000.5')
+    expect(formatStakeDisplay('1000.50')).toBe('1,000.50')
+    expect(formatStakeDisplay('.5')).toBe('.5')
   })
 })
 

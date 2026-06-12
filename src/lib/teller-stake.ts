@@ -37,6 +37,30 @@ export function sanitizeStakeInput(raw: string): string {
   return fracDigits.length > 0 ? `${intPart}.${fracDigits}` : intPart
 }
 
+/** Thousand separators for the teller amount field while typing. */
+export function formatStakeDisplay(raw: string): string {
+  if (raw === '') return ''
+  if (raw === '.') return '.'
+
+  const endsWithDot = raw.endsWith('.')
+  const dotIndex = raw.indexOf('.')
+  const intPart = dotIndex === -1 ? raw : raw.slice(0, dotIndex)
+  const fracPart = dotIndex === -1 ? undefined : raw.slice(dotIndex + 1)
+
+  const formattedInt =
+    intPart === ''
+      ? ''
+      : Number(intPart).toLocaleString(undefined, { maximumFractionDigits: 0 })
+
+  if (endsWithDot && (fracPart === undefined || fracPart === '')) {
+    return `${formattedInt}.`
+  }
+  if (fracPart !== undefined) {
+    return `${formattedInt}.${fracPart}`
+  }
+  return formattedInt
+}
+
 /** Parse kiosk-style numeric string (optional commas) to a finite stake or null. */
 export function parseStakeInput(raw: string): number | null {
   const t = raw.trim().replace(/,/g, '')

@@ -44,6 +44,15 @@ describe('TellerBettingPanel', () => {
     expect(input).toHaveValue('100')
   })
 
+  it('formats thousands while typing', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<TellerBettingPanel fight={makeFight()} />)
+
+    const input = screen.getByLabelText(/enter amount/i)
+    await user.type(input, '1500')
+    expect(input).toHaveValue('1,500')
+  })
+
   it('places bet on Meron when amount is valid', async () => {
     const user = userEvent.setup()
     const fight = makeFight({ id: 'fight-99' })
