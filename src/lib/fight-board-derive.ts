@@ -1,6 +1,6 @@
 import { FIGHT_STATUS_VALUE, type FightStatusValue } from '@/constants'
 import type { BetSideWire } from '@/types/api'
-import type { Fight, FightOutcomeWire, PlaceBetFightSummary } from '@/types/api'
+import type { BetRow, Fight, FightOutcomeWire, PlaceBetFightSummary } from '@/types/api'
 
 /** Rows always visible in the history column; extra rows scroll inside the viewport. */
 export const FIGHT_BOARD_HISTORY_VISIBLE_ROWS = 6
@@ -148,6 +148,34 @@ export function settledOddsForSide(
   return parsePayoutRatio(
     side === 'MERON' ? fight.payoutRatioMeron : fight.payoutRatioWala
   )
+}
+
+/**
+ * Odds for a payout receipt: settlement ratio when present, else payout ÷ stake
+ * (matches the printed payout amount), else board odds.
+ */
+export function payoutReceiptOddsMultiplier(
+  fight: PlaceBetFightSummary,
+  bet: Pick<BetRow, 'side' | 'amount' | 'payoutAmount'>
+): number | null {
+  const settled = settledOddsForSide(fight, bet.side)
+  if (settled != null) return settled
+
+  const stake = Number(bet.amount)
+  const payout = Number(bet.payoutAmount)
+  if (Number.isFinite(stake) && stake > 0 && Number.isFinite(payout) && payout > 0) {
+    return payout / stake
+  }
+
+  return boardOddsForSide(fight, bet.side)
+}
+
+/** Board / receipt odds string — scaled ×100 with 2 decimal places (1.9425 → "194.25"). */
+export function formatPayoutReceiptOdds(
+  fight: PlaceBetFightSummary,
+  bet: Pick<BetRow, 'side' | 'amount' | 'payoutAmount'>
+): string {
+  return formatBoardOdds(payoutReceiptOddsMultiplier(fight, bet))
 }
 
 /**

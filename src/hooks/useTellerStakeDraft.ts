@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type ChangeEvent } from 'react'
 
 import {
+  addQuickStakeAmount,
   formatStakeDisplay,
   parseStakeInput,
   sanitizeStakeInput,
@@ -28,7 +29,7 @@ export function useTellerStakeDraft() {
   }, [])
 
   const applyQuick = useCallback((n: number) => {
-    setRaw(sanitizeStakeInput(String(n)))
+    setRaw((prev) => addQuickStakeAmount(prev, n))
   }, [])
 
   return {

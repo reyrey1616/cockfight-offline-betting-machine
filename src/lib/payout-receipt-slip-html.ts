@@ -76,6 +76,11 @@ export const PAYOUT_RECEIPT_SLIP_CSS = `
     .line + .line { margin-top: 0.35mm; }
     .label { font-weight: 800; }
     .value { font-size: 13px; font-weight: 700; }
+    .odds-value {
+      font-size: 13px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
     .emphasis { font-size: 15px; font-weight: 800; }
     .cut {
       flex: 0 0 auto;
@@ -129,7 +134,7 @@ export function buildPayoutReceiptSlipHtml(fields: PayoutReceiptSlipFields): str
       <p class="line"><span class="label">Betting side:</span> <span class="value">${bettingSide}</span></p>
       <p class="line"><span class="label">Teller:</span> <span class="value">${tellerName}</span></p>
       <p class="line"><span class="label">Bet:</span> <span class="value">${betAmount}</span></p>
-      <p class="line"><span class="label">Odds:</span> <span class="value">${odds}</span></p>
+      <p class="line"><span class="label">Odds:</span> <span class="value odds-value">${odds}</span></p>
       <p class="line"><span class="label">Payout:</span> <span class="value emphasis">${payoutAmount}</span></p>
       <p class="line"><span class="label">Date &amp; time:</span> <span class="value">${paidAt}</span></p>
     </div>

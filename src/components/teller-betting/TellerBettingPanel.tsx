@@ -146,7 +146,7 @@ export function TellerBettingPanel({ fight, className }: TellerBettingPanelProps
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Minimum bet is 100. Digits only (and one decimal for centavos). Amounts format as you type.
+            Minimum bet is 100. Type an amount or tap presets to add (e.g. 100 + 100 = 200).
           </p>
           {draft.validationError && draft.rawDisplay.length > 0 ? (
             <p className="text-xs text-destructive">{draft.validationError}</p>

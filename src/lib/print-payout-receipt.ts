@@ -4,7 +4,7 @@ import {
   buildPayoutReceiptSlipHtml,
   formatSlipTimestamp
 } from '@/lib/payout-receipt-slip-html'
-import { formatBoardOdds, settledOddsForSide } from '@/lib/fight-board-derive'
+import { formatPayoutReceiptOdds } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import type { BetRow, PlaceBetFightSummary } from '@/types/api'
 
@@ -27,7 +27,7 @@ function buildSlipFields(input: PayoutReceiptPrintInput) {
     bettingSide: BET_SIDE_LABEL[input.bet.side],
     tellerName: input.bet.tellerNameSnapshot ?? '—',
     betAmount: formatMoney(input.bet.amount),
-    odds: formatBoardOdds(settledOddsForSide(input.fight, input.bet.side)),
+    odds: formatPayoutReceiptOdds(input.fight, input.bet),
     payoutAmount: payout,
     paidAt: formatSlipTimestamp(paidAtIso)
   }

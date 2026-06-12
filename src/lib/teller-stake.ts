@@ -75,6 +75,25 @@ function roundMoney(n: number): number {
   return Math.round(n * 100) / 100
 }
 
+/** Numeric value from the raw stake field (empty / invalid → 0). */
+export function parseStakeRawValue(raw: string): number {
+  const t = raw.trim().replace(/,/g, '')
+  if (t === '' || t === '.') return 0
+  const n = Number(t)
+  return Number.isFinite(n) && n >= 0 ? roundMoney(n) : 0
+}
+
+/** Add a quick-preset amount to the current stake (capped at max). */
+export function addQuickStakeAmount(raw: string, increment: number): string {
+  if (!Number.isFinite(increment) || increment <= 0) {
+    return sanitizeStakeInput(raw)
+  }
+
+  const next = Math.min(roundMoney(parseStakeRawValue(raw) + increment), MAX_STAKE)
+  const asString = Number.isInteger(next) ? String(next) : next.toFixed(2)
+  return sanitizeStakeInput(asString)
+}
+
 /** Wire amount for POST /bets (number with ≤ 2 dp). */
 export function stakeToWireAmount(n: number): number {
   return roundMoney(n)

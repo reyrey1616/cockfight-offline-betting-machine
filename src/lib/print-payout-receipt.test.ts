@@ -40,7 +40,7 @@ describe('printPayoutReceipt', () => {
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Teller:')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Joshua Castanares')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Odds:')
-    expect(printPayoutReceipt.mock.calls[0][0].html).toContain('190')
+    expect(printPayoutReceipt.mock.calls[0][0].html).toContain('190.00')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('Date &amp; time:')
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('950.00')
   })

@@ -10,6 +10,8 @@ import {
   fightBoardHistoryViewportHeight,
   floorPayoutMultiplier,
   formatBoardOdds,
+  formatPayoutReceiptOdds,
+  payoutReceiptOddsMultiplier,
   resolveBoardOddsForSide,
   scaledBoardOdds,
   settledOddsForSide,
@@ -110,6 +112,33 @@ describe('computePayoutFromOdds', () => {
   })
 })
 
+
+describe('payoutReceiptOddsMultiplier', () => {
+  it('prefers settlement ratio, then payout ÷ stake', () => {
+    const fight = makeFight({
+      status: 'SETTLED',
+      payoutRatioWala: '1.9000'
+    })
+    const bet = {
+      side: 'WALA' as const,
+      amount: '500.00',
+      payoutAmount: '950.00'
+    }
+    expect(payoutReceiptOddsMultiplier(fight, bet)).toBe(1.9)
+    expect(formatPayoutReceiptOdds(fight, bet)).toBe('190.00')
+  })
+
+  it('derives odds from payout and stake when ratio is missing', () => {
+    const fight = makeFight({ status: 'SETTLED', payoutRatioWala: null })
+    const bet = {
+      side: 'WALA' as const,
+      amount: '500.00',
+      payoutAmount: '971.25'
+    }
+    expect(payoutReceiptOddsMultiplier(fight, bet)).toBeCloseTo(1.9425, 4)
+    expect(formatPayoutReceiptOdds(fight, bet)).toBe('194.25')
+  })
+})
 
 describe('settledOddsForSide', () => {
   it('returns payout ratio for the bet side', () => {

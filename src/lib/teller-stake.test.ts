@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  addQuickStakeAmount,
   formatStakeDisplay,
   parseStakeInput,
+  parseStakeRawValue,
   sanitizeStakeInput,
   stakeToWireAmount,
   stakeValidationMessage
@@ -19,6 +21,40 @@ describe('sanitizeStakeInput', () => {
     expect(sanitizeStakeInput('100.')).toBe('100.')
     expect(sanitizeStakeInput('100.999')).toBe('100.99')
     expect(sanitizeStakeInput('12.34.56')).toBe('12.34')
+  })
+})
+
+describe('addQuickStakeAmount', () => {
+  it('adds preset amounts cumulatively', () => {
+    expect(addQuickStakeAmount('', 100)).toBe('100')
+    expect(addQuickStakeAmount('100', 100)).toBe('200')
+    expect(addQuickStakeAmount(addQuickStakeAmount('', 100), 100)).toBe('200')
+    expect(addQuickStakeAmount(addQuickStakeAmount(addQuickStakeAmount('', 100), 100), 100)).toBe(
+      '300'
+    )
+  })
+
+  it('adds to typed amounts including decimals', () => {
+    expect(addQuickStakeAmount('1,500', 500)).toBe('2000')
+    expect(addQuickStakeAmount('100.50', 100)).toBe('200.50')
+  })
+
+  it('caps at the maximum stake', () => {
+    expect(addQuickStakeAmount('999900', 500)).toBe('1000000')
+    expect(addQuickStakeAmount('1000000', 100)).toBe('1000000')
+  })
+})
+
+describe('parseStakeRawValue', () => {
+  it('returns 0 for empty or invalid input', () => {
+    expect(parseStakeRawValue('')).toBe(0)
+    expect(parseStakeRawValue('.')).toBe(0)
+    expect(parseStakeRawValue('abc')).toBe(0)
+  })
+
+  it('parses formatted and plain numbers', () => {
+    expect(parseStakeRawValue('1,500')).toBe(1500)
+    expect(parseStakeRawValue('100.25')).toBe(100.25)
   })
 })
 
