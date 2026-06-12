@@ -41,6 +41,7 @@ export function buildBetTicketSlipHtml(fields: BetTicketSlipFields): string {
   <div class="slip">
     <div class="barcode-wrap">
       <img class="barcode" src="${fields.barcodePngDataUrl}" alt="${code}" />
+      <p class="barcode-code">${code}</p>
     </div>
     <div class="meta">
       <p class="line"><span class="label">Fight #:</span> <span class="value">${fightNumber}</span></p>

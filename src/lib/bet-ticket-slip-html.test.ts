@@ -13,8 +13,10 @@ describe('buildBetTicketSlipHtml', () => {
       placedAt: '2026-06-07 14:30',
       barcodePngDataUrl: 'data:image/png;base64,abc'
     })
-    expect(html).toContain('80mm')
+    expect(html).toContain('72mm')
     expect(html).toContain('class="slip"')
+    expect(html).toContain('class="barcode-code"')
+    expect(html).toContain('AB12CD34')
     expect(html).toContain('data:image/png;base64,abc')
     expect(html).toContain('Bet amount:')
     expect(html).toContain('Teller:')

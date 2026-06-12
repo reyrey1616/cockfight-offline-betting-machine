@@ -35,13 +35,9 @@ export interface CashSlipPrintPayload {
 
 export type CashSlipPrintResult = BetTicketPrintResult
 
-/** Payload for 80mm thermal payout receipt (Electron main process). */
+/** Full payout receipt document — same HTML as browser `window.print()`. */
 export interface PayoutReceiptPrintPayload {
-  fightNumber: string
-  bettingSide: string
-  betAmount: string
-  payoutAmount: string
-  paidAt: string
+  html: string
 }
 
 export type PayoutReceiptPrintResult = BetTicketPrintResult

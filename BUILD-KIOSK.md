@@ -31,7 +31,7 @@ Edit **`config.json`**:
 | Field | Meaning |
 |-------|---------|
 | `apiBaseUrl` | **Required** — **server** LAN IP, same on every kiosk at this site (never `localhost` on teller PCs) |
-| `printerName` | `""` = Windows/Mac **default physical printer** (skips “Microsoft Print to PDF”). Set the exact name from Windows Settings if needed. |
+| `printerName` | `""` = **Windows default** physical printer (same as the print dialog). If you have several copies of the same driver (e.g. `XP-80C (copy 1)` vs `copy 3`), set the exact online name here — silent print used to pick the first thermal in list order, not your default. |
 | `silentPrint` | `true` = print ticket after each bet, no dialog (requires the **installed Electron app**, not Chrome at `localhost:5173`) |
 | `kioskFullscreen` | `true` = fullscreen kiosk window |
 
@@ -72,6 +72,10 @@ npm run dist
 |----------|----------|--------|
 | **macOS .dmg** | Mac | `release/FMJ offline betting machine *.dmg` |
 | **Windows .exe** | Windows | `release/FMJ offline betting machine Setup *.exe` |
+
+**Windows “Cannot create symbolic link” (winCodeSign):** `package.json` sets `win.signAndEditExecutable: false` so unsigned installers build without extracting winCodeSign (which needs symlink privileges on Windows). For code-signed builds, enable **Developer Mode** in Windows settings and remove that flag.
+
+**No installer needed:** `npm run pack` → runnable app in `release/win-unpacked/`.
 
 ## 3. Install on each teller PC (repeat for every kiosk)
 

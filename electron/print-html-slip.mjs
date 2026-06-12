@@ -6,12 +6,27 @@ import { pathToFileURL } from 'node:url'
 
 import { BrowserWindow } from 'electron'
 
-const PRINT_TIMEOUT_MS = 20_000
-/** Silent `webContents.print` often races the compositor — browser `window.print()` does not. */
-const SILENT_PRINT_SETTLE_MS = 900
+import {
+  normalizeThermalPng,
+  printPngSilentlyOnWindows,
+  THERMAL_CAPTURE_SCALE,
+  THERMAL_SLIP_WIDTH_MM,
+  thermalHeightDots,
+  thermalLayoutHeightPx,
+  thermalLayoutWidthPx,
+  thermalWidthDots
+} from './print-png-windows.mjs'
+import { resolvePrinterName, THERMAL_PRINTER_RE } from './printer-resolve.mjs'
 
-const VIRTUAL_PRINTER_RE = /pdf|xps|one note|onenote|fax|send to|microsoft print/i
-const THERMAL_PRINTER_RE = /xp-k200|xprinter|thermal|pos|receipt|80mm/i
+const SILENT_PRINT_TIMEOUT_MS = 20_000
+/** Interactive print — user must confirm in the system dialog. */
+const INTERACTIVE_PRINT_TIMEOUT_MS = 120_000
+/** Let layout + barcode image settle before measuring the slip. */
+const SILENT_PRINT_SETTLE_MS = 1_200
+/** Tiny capture bleed for anti-aliased borders — paper height still uses `.slip` only. */
+const SLIP_CAPTURE_BLEED_CSS_PX = 2
+/** Keep the spooler window alive briefly after silent print (Windows race). */
+const SILENT_SPOOLER_SETTLE_MS = 1_500
 
 async function waitForPrintReady(webContents) {
   await webContents.executeJavaScript(`
@@ -38,52 +53,45 @@ async function waitForPrintReady(webContents) {
   await webContents.executeJavaScript(`document.fonts?.ready ?? Promise.resolve()`)
 }
 
-async function resolvePrinterName(webContents, configuredName) {
-  const trimmed = configuredName?.trim()
-  if (trimmed) return trimmed
-
-  try {
-    const printers = await webContents.getPrintersAsync()
-    const physical = printers.filter((p) => !VIRTUAL_PRINTER_RE.test(p.name))
-    const thermal = physical.find((p) => THERMAL_PRINTER_RE.test(p.name))
-    const pick =
-      thermal ??
-      physical.find((p) => p.isDefault) ??
-      physical[0] ??
-      printers.find((p) => p.isDefault) ??
-      printers[0]
-    return pick?.name ?? ''
-  } catch (err) {
-    console.warn('[print-html-slip] getPrintersAsync failed', err)
-    return ''
+/** Slip width in microns; height derived from rendered slip. */
+function buildThermalPageSize(layoutHeightPx) {
+  const widthMicrons = THERMAL_SLIP_WIDTH_MM * 1000
+  if (layoutHeightPx > 0) {
+    const heightMm = Math.ceil((layoutHeightPx * 25.4) / 96) + 4
+    return { width: widthMicrons, height: Math.max(heightMm * 1000, 70_000) }
   }
+  return { width: widthMicrons, height: 120_000 }
 }
 
-/**
- * Match browser print: `@page { size: 80mm auto }` — no fixed micron height.
- * Fixed height caused short blank feeds on thermal drivers.
- */
-function buildPrintOptions(config, deviceName) {
+/** Thermal silent print: explicit micron page size, never forced DPI (blank/tiny on XP-80). */
+function buildPrintOptions(config, deviceName, layout) {
   const opts = {
-    silent: config.silentPrint !== false,
+    silent: isSilentPrint(config),
     printBackground: true,
     margins: { marginType: 'none' },
-    landscape: false,
-    preferCSSPageSize: true
+    landscape: false
   }
 
   if (deviceName) {
     opts.deviceName = deviceName
   }
 
-  if (deviceName && THERMAL_PRINTER_RE.test(deviceName)) {
-    opts.dpi = { horizontal: 203, vertical: 203 }
+  const isThermal = !deviceName || THERMAL_PRINTER_RE.test(deviceName)
+  if (isThermal) {
+    opts.preferCSSPageSize = false
+    opts.pageSize = buildThermalPageSize(layout?.height ?? 0)
+  } else {
+    opts.preferCSSPageSize = true
   }
 
   return opts
 }
 
-function printWithTimeout(webContents, opts, printWin, timeoutMs = PRINT_TIMEOUT_MS) {
+function isSilentPrint(config) {
+  return config.silentPrint !== false
+}
+
+function printWithTimeout(webContents, opts, printWin, timeoutMs = SILENT_PRINT_TIMEOUT_MS) {
   return new Promise((resolve) => {
     let settled = false
     const finish = (result) => {
@@ -94,13 +102,10 @@ function printWithTimeout(webContents, opts, printWin, timeoutMs = PRINT_TIMEOUT
     }
 
     const timer = setTimeout(() => {
-      console.warn('[print-html-slip] print timed out — closing print window', {
+      console.warn('[print-html-slip] print timed out', {
         timeoutMs,
         deviceName: opts.deviceName
       })
-      if (!printWin.isDestroyed()) {
-        printWin.destroy()
-      }
       finish({ success: false, failureReason: 'Print timed out' })
     }, timeoutMs)
 
@@ -110,10 +115,66 @@ function printWithTimeout(webContents, opts, printWin, timeoutMs = PRINT_TIMEOUT
   })
 }
 
-/** Force a paint pass before silent print (hidden/off-screen windows often rasterize blank). */
-async function forcePaint(webContents) {
-  await webContents.executeJavaScript('void document.body.offsetHeight')
-  const slipRect = await webContents.executeJavaScript(`
+/**
+ * Non-silent print must use `window.print()` on a visible window.
+ * `webContents.print({ silent: false })` on an off-screen window often never shows a dialog on Windows.
+ */
+async function printInteractive(webContents, printWin) {
+  printWin.setAlwaysOnTop(true, 'screen-saver')
+  printWin.center()
+  printWin.show()
+  printWin.focus()
+
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = (result) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      resolve(result)
+    }
+
+    const timer = setTimeout(() => {
+      console.warn('[print-html-slip] interactive print timed out')
+      finish({ success: false, failureReason: 'Print dialog timed out' })
+    }, INTERACTIVE_PRINT_TIMEOUT_MS)
+
+    webContents
+      .executeJavaScript(`
+        new Promise((resolve) => {
+          let settled = false;
+          const done = (success) => {
+            if (settled) return;
+            settled = true;
+            resolve({ success });
+          };
+          window.addEventListener('afterprint', () => done(true), { once: true });
+          window.print();
+        })
+      `)
+      .then((result) => {
+        finish({
+          success: result?.success === true,
+          failureReason: result?.success === true ? undefined : 'Print cancelled'
+        })
+      })
+      .catch((err) => {
+        finish({
+          success: false,
+          failureReason: err instanceof Error ? err.message : String(err)
+        })
+      })
+  })
+}
+
+async function waitForCompositorFrames(webContents) {
+  await webContents.executeJavaScript(
+    `new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))`
+  )
+}
+
+async function readSlipRect(webContents) {
+  return webContents.executeJavaScript(`
     (() => {
       const slip = document.querySelector('.slip');
       if (!slip) return null;
@@ -121,11 +182,202 @@ async function forcePaint(webContents) {
       return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) };
     })()
   `)
+}
+
+/** Full slip page (72mm safe width on 80mm roll). */
+async function readPageRect(webContents) {
+  return webContents.executeJavaScript(`
+    (() => {
+      const el = document.body;
+      const r = el.getBoundingClientRect();
+      return {
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+        width: Math.round(r.width),
+        height: Math.round(r.height)
+      };
+    })()
+  `)
+}
+
+/** Force a paint pass before silent print (off-screen windows often rasterize blank on Windows). */
+async function forcePaint(webContents) {
+  await waitForCompositorFrames(webContents)
+  await webContents.executeJavaScript('void document.body.offsetHeight')
+  const slipRect = await readSlipRect(webContents)
 
   if (slipRect?.width > 0 && slipRect?.height > 0) {
     await webContents.capturePage(slipRect)
   } else {
     await webContents.capturePage()
+  }
+}
+
+function buildRasterSlipHtml(pngBase64) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @page { margin: 0; size: 72mm auto; }
+    html, body { margin: 0; padding: 0; width: 72mm; background: #fff; }
+    img { display: block; width: 72mm; height: auto; }
+  </style>
+</head>
+<body><img alt="slip" src="data:image/png;base64,${pngBase64}" /></body>
+</html>`
+}
+
+function writeTempPng(buffer) {
+  const filePath = path.join(os.tmpdir(), `cockfight-slip-${randomUUID()}.png`)
+  fs.writeFileSync(filePath, buffer)
+  return filePath
+}
+
+function removeTempFile(filePath) {
+  try {
+    fs.unlinkSync(filePath)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Brief on-screen paint so capturePage gets real pixels (no print dialog). */
+async function armSilentPrintSurface(printWin, webContents) {
+  printWin.center()
+  if (!printWin.isVisible()) {
+    printWin.showInactive()
+  }
+  await waitForCompositorFrames(webContents)
+  await forcePaint(webContents)
+  await new Promise((resolve) => setTimeout(resolve, 250))
+}
+
+async function captureSlipPng(webContents, captureRect, layoutHeightCssPx, deviceName) {
+  const isThermal = !deviceName || THERMAL_PRINTER_RE.test(deviceName)
+  const scaleFactor = isThermal ? THERMAL_CAPTURE_SCALE : 1
+  const image = await webContents.capturePage(captureRect, { scaleFactor })
+  let buffer = image.toPNG()
+  let width = image.getSize().width
+  let height = image.getSize().height
+  let heightMm
+
+  if (isThermal) {
+    const normalized = normalizeThermalPng(buffer, layoutHeightCssPx)
+    buffer = normalized.buffer
+    width = normalized.width
+    height = normalized.height
+    heightMm = normalized.heightMm
+  }
+
+  return { path: writeTempPng(buffer), width, height, heightMm }
+}
+
+async function silentPrintRasterHtml(webContents, printWin, config, deviceName, slipRect, pngPath) {
+  const rasterPath = writeTempHtml(
+    buildRasterSlipHtml(fs.readFileSync(pngPath).toString('base64'))
+  )
+
+  try {
+    await printWin.loadURL(pathToFileURL(rasterPath).href)
+    await waitForPrintReady(webContents)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    await armSilentPrintSurface(printWin, webContents)
+
+    const opts = buildPrintOptions(config, deviceName, slipRect)
+    const printResult = await printWithTimeout(webContents, opts, printWin)
+    await new Promise((resolve) => setTimeout(resolve, SILENT_SPOOLER_SETTLE_MS))
+    return printResult
+  } finally {
+    removeTempFile(rasterPath)
+  }
+}
+
+/**
+ * Silent thermal: capture slip PNG, then on Windows send the bitmap with `mspaint /pt`
+ * (reliable on XP-80). Chromium `webContents.print` often spools blank while preview looks fine.
+ */
+function fixedSlipCaptureRect() {
+  return {
+    x: 0,
+    y: 0,
+    width: thermalLayoutWidthPx(),
+    height: thermalLayoutHeightPx()
+  }
+}
+
+function slipCaptureRect(slipRect) {
+  if (!slipRect || slipRect.width < 40 || slipRect.height < 40) {
+    return fixedSlipCaptureRect()
+  }
+
+  const bleed = SLIP_CAPTURE_BLEED_CSS_PX
+  return {
+    x: Math.max(0, slipRect.x - bleed),
+    y: Math.max(0, slipRect.y - bleed),
+    width: slipRect.width + bleed * 2,
+    height: slipRect.height + bleed * 2
+  }
+}
+
+async function silentPrintSlip(webContents, printWin, config, layout) {
+  const deviceName = await resolvePrinterName(webContents, config.printerName)
+  webContents.setZoomFactor(1)
+  await armSilentPrintSurface(printWin, webContents)
+
+  const slipRect = await readSlipRect(webContents)
+  if (!layout?.ok) {
+    return {
+      success: false,
+      failureReason: layout?.reason ?? 'Slip layout not ready',
+      deviceName,
+      silent: true
+    }
+  }
+
+  const captureRect = slipCaptureRect(slipRect)
+  const layoutHeightCssPx =
+    slipRect?.height >= 40 ? slipRect.height : captureRect.height
+  const png = await captureSlipPng(webContents, captureRect, layoutHeightCssPx, deviceName)
+
+  try {
+    if (printWin.isVisible()) {
+      printWin.hide()
+    }
+
+    const isThermal = !deviceName || THERMAL_PRINTER_RE.test(deviceName)
+    if (process.platform === 'win32' && isThermal) {
+      try {
+        const method = await printPngSilentlyOnWindows(png.path, deviceName, png.width, png.height)
+        await new Promise((resolve) => setTimeout(resolve, SILENT_SPOOLER_SETTLE_MS))
+        console.log('[print-html-slip] silent thermal print', {
+          method,
+          deviceName,
+          widthPx: png.width,
+          heightPx: png.height,
+          heightMm: png.heightMm ?? thermalHeightDots(),
+          targetWidthPx: thermalWidthDots(),
+          slipCssPx: slipRect
+            ? `${Math.round(slipRect.width)}x${Math.round(slipRect.height)}`
+            : 'n/a'
+        })
+        return { success: true, deviceName, silent: true, method }
+      } catch (err) {
+        console.warn('[print-html-slip] PowerShell thermal print failed, falling back to Chromium print', err)
+      }
+    }
+
+    const printResult = await silentPrintRasterHtml(
+      webContents,
+      printWin,
+      config,
+      deviceName,
+      slipRect,
+      png.path
+    )
+    return { ...printResult, deviceName, silent: true, method: 'chromium' }
+  } finally {
+    removeTempFile(png.path)
   }
 }
 
@@ -174,15 +426,17 @@ function removeTempHtml(filePath) {
 export async function printHtmlSlip(_parentWin, html, config) {
   const tmpPath = writeTempHtml(html)
 
-  // Off-screen but shown: Chromium paints; `show:false` silent prints are often blank on Windows.
+  const silent = isSilentPrint(config)
+
+  // Silent: load hidden, then `armSilentPrintSurface` shows on-screen inactive before print.
+  // Interactive: `printInteractive` centers and focuses before `window.print()`.
   const printWin = new BrowserWindow({
-    show: true,
-    x: -3000,
-    y: 0,
-    width: 420,
-    height: 720,
-    frame: false,
-    skipTaskbar: true,
+    show: false,
+    useContentSize: silent,
+    width: silent ? thermalLayoutWidthPx() : 420,
+    height: silent ? thermalLayoutHeightPx() : 720,
+    frame: !silent,
+    skipTaskbar: silent,
     autoHideMenuBar: true,
     paintWhenInitiallyHidden: true,
     webPreferences: {
@@ -209,20 +463,14 @@ export async function printHtmlSlip(_parentWin, html, config) {
       return { ok: false, error: layout.reason ?? 'Slip layout not ready' }
     }
 
-    await forcePaint(printWin.webContents)
-
-    const deviceName = await resolvePrinterName(printWin.webContents, config.printerName)
-    const opts = buildPrintOptions(config, deviceName)
-
-    const result = await printWithTimeout(printWin.webContents, opts, printWin)
-
-    // Let the spooler finish before tearing down the window (silent print race).
-    await new Promise((resolve) => setTimeout(resolve, 600))
+    const result = silent
+      ? await silentPrintSlip(printWin.webContents, printWin, config, layout)
+      : await printInteractive(printWin.webContents, printWin)
 
     if (!result.success) {
       console.warn('[print-html-slip]', result.failureReason, {
-        deviceName,
-        silent: opts.silent,
+        deviceName: result.deviceName,
+        silent: result.silent ?? silent,
         layout
       })
       return { ok: false, error: result.failureReason }

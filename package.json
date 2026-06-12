@@ -78,8 +78,12 @@
       "output": "release",
       "buildResources": "build"
     },
+    "asarUnpack": [
+      "electron/print-png-thermal.ps1"
+    ],
     "files": [
       "electron/**/*",
+      "shared/**/*",
       "config.example.json",
       "config.json"
     ],
