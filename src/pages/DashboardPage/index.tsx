@@ -15,6 +15,7 @@ import { FightCommissionTable } from './tables/FightCommissionTable'
 import { TellerCommissionsTable } from './tables/TellerCommissionsTable'
 import { CancelledTicketsTable } from './tables/CancelledTicketsTable'
 import { WinningTicketsTable } from './tables/WinningTicketsTable'
+import { SessionSummaryCard } from './SessionSummaryCard'
 
 export function DashboardPage() {
   const user = useAuthUser()
@@ -96,6 +97,12 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <SessionSummaryCard
+        tellerId={apiTellerId}
+        isAdmin={Boolean(isAdmin)}
+        panelClassName="border-sky-300 bg-sky-50/90 dark:border-sky-900 dark:bg-sky-950/40"
+      />
 
       {/* Betting activity + voided tickets */}
       <div className="grid gap-3 lg:grid-cols-[7fr_3fr]">

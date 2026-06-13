@@ -5,25 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BET_SIDE_LABEL } from '@/constants'
 import { dash, fmtWhenShort } from '@/pages/DashboardPage/dashboard-dense'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
-import { boardOddsForSide, formatBoardOdds } from '@/lib/fight-board-derive'
+import { formatBetListOdds } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import { listBets } from '@/lib/api-bets'
 import type { BetListRow } from '@/types/api'
 import { cn } from '@/lib/utils'
-
-function formatBetOdds(bet: BetListRow): string {
-  const odds = boardOddsForSide(
-    {
-      status: bet.fightStatus,
-      meronOdds: bet.meronOdds,
-      walaOdds: bet.walaOdds,
-      payoutRatioMeron: bet.payoutRatioMeron,
-      payoutRatioWala: bet.payoutRatioWala
-    },
-    bet.side
-  )
-  return formatBoardOdds(odds)
-}
 
 function formatBetPayout(bet: BetListRow): string {
   if (bet.payoutAmount == null || bet.payoutAmount === '') return '—'
@@ -116,7 +102,7 @@ export function WinningTicketsTable({
                   <tr key={b.id} className={dash.row}>
                     <td className={`${dash.td} font-mono text-[11px] font-semibold`}>{b.code}</td>
                     <td className={`${dash.tdNum} text-right`}>{formatMoney(b.amount)}</td>
-                    <td className={`${dash.tdNum} text-center`}>{formatBetOdds(b)}</td>
+                    <td className={`${dash.tdNum} text-center`}>{formatBetListOdds(b)}</td>
                     <td className={`${dash.tdNum} text-right font-medium`}>{formatBetPayout(b)}</td>
                     <td className={`${dash.tdNum} text-center font-semibold`}>{b.fightNumber}</td>
                     <td className={dash.td}>{BET_SIDE_LABEL[b.side]}</td>

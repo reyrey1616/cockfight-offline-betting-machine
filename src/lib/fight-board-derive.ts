@@ -1,6 +1,6 @@
 import { FIGHT_STATUS_VALUE, type FightStatusValue } from '@/constants'
 import type { BetSideWire } from '@/types/api'
-import type { BetRow, Fight, FightOutcomeWire, PlaceBetFightSummary } from '@/types/api'
+import type { BetRow, BetListRow, Fight, FightOutcomeWire, PlaceBetFightSummary } from '@/types/api'
 
 /** Rows always visible in the history column; extra rows scroll inside the viewport. */
 export const FIGHT_BOARD_HISTORY_VISIBLE_ROWS = 6
@@ -188,6 +188,23 @@ export function boardOddsForSide(
 ): number | null {
   if (fight == null) return null
   return side === 'MERON' ? fight.meronOdds : fight.walaOdds
+}
+
+/**
+ * Odds for a dashboard bet row: final pool projection for this ticket's side.
+ * Works for LOST / WON / PAID / PENDING — uses `meronOdds` / `walaOdds` from
+ * `GET /bets` (computed from frozen fight pools, not settlement payout ratio).
+ */
+export function betListOddsForSide(
+  row: Pick<BetListRow, 'side' | 'meronOdds' | 'walaOdds'>
+): number | null {
+  return row.side === 'MERON' ? row.meronOdds : row.walaOdds
+}
+
+export function formatBetListOdds(
+  row: Pick<BetListRow, 'side' | 'meronOdds' | 'walaOdds'>
+): string {
+  return formatBoardOdds(betListOddsForSide(row))
 }
 
 /**

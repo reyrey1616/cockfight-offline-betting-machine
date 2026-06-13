@@ -1,17 +1,45 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BET_SIDE_LABEL } from '@/constants'
 import { dash, fmtWhenShort } from '@/pages/DashboardPage/dashboard-dense'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
+import {
+  formatBoardOdds,
+  settledOddsForSide
+} from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import { listLedger } from '@/lib/api-cash'
-import type { LedgerEntryTypeWire } from '@/types/api'
+import type { LedgerEntryRow, LedgerEntryTypeWire } from '@/types/api'
+
+const COLUMN_COUNT = 7
 
 function signedMoney(amount: string) {
   const n = Number(amount)
   if (Number.isNaN(n)) return amount
   const abs = formatMoney(String(Math.abs(n).toFixed(2)))
   return n < 0 ? `−${abs}` : abs
+}
+
+function ledgerBetOdds(entry: LedgerEntryRow): string {
+  if (entry.betSide == null) return '—'
+
+  const settled = settledOddsForSide(
+    {
+      payoutRatioMeron: entry.payoutRatioMeron ?? null,
+      payoutRatioWala: entry.payoutRatioWala ?? null
+    },
+    entry.betSide
+  )
+  if (settled != null) return formatBoardOdds(settled)
+
+  const stake = entry.betAmount != null ? Number(entry.betAmount) : NaN
+  const payout = entry.betPayoutAmount != null ? Number(entry.betPayoutAmount) : NaN
+  if (Number.isFinite(stake) && stake > 0 && Number.isFinite(payout) && payout > 0) {
+    return formatBoardOdds(payout / stake)
+  }
+
+  return '—'
 }
 
 export interface PayoutHistoryLedgerTableProps {
@@ -40,7 +68,6 @@ export function PayoutHistoryLedgerTable({
   })
 
   const entries = q.data?.entries ?? []
-  const total = entries.reduce((s, e) => s + Number(e.amount), 0)
 
   return (
     <Card className={dash.card(panelClassName)}>
@@ -54,7 +81,10 @@ export function PayoutHistoryLedgerTable({
             <thead className={dash.thead}>
               <tr className="border-b border-border/60">
                 <th className={dash.th}>User</th>
-                <th className={dash.th}>Amount</th>
+                <th className={`${dash.th} text-right`}>Bet amount</th>
+                <th className={`${dash.th} text-center`}>Odds</th>
+                <th className={dash.th}>Side</th>
+                <th className={`${dash.th} text-right`}>Payout</th>
                 <th className={dash.th}>Remarks</th>
                 <th className={dash.th}>Date</th>
               </tr>
@@ -62,19 +92,19 @@ export function PayoutHistoryLedgerTable({
             <tbody>
               {q.isLoading ? (
                 <tr>
-                  <td colSpan={4} className={dash.empty}>
+                  <td colSpan={COLUMN_COUNT} className={dash.empty}>
                     Loading…
                   </td>
                 </tr>
               ) : q.isError ? (
                 <tr>
-                  <td colSpan={4} className={`${dash.empty} text-destructive`}>
+                  <td colSpan={COLUMN_COUNT} className={`${dash.empty} text-destructive`}>
                     Could not load payouts.
                   </td>
                 </tr>
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className={dash.empty}>
+                  <td colSpan={COLUMN_COUNT} className={dash.empty}>
                     No payout rows in view.
                   </td>
                 </tr>
@@ -82,10 +112,16 @@ export function PayoutHistoryLedgerTable({
                 entries.map((e) => (
                   <tr key={e.id} className={dash.row}>
                     <td className={`${dash.td} font-medium`}>{resolveTellerName(e.tellerId)}</td>
+                    <td className={`${dash.tdNum} text-right`}>
+                      {e.betAmount != null ? formatMoney(e.betAmount) : '—'}
+                    </td>
+                    <td className={`${dash.tdNum} text-center`}>{ledgerBetOdds(e)}</td>
+                    <td className={dash.td}>
+                      {e.betSide != null ? BET_SIDE_LABEL[e.betSide] : '—'}
+                    </td>
                     <td className={`${dash.tdNum} text-destructive`}>{signedMoney(e.amount)}</td>
                     <td className={`${dash.td} text-muted-foreground`}>
                       {e.notes?.trim() || 'Payout'}
-                      {e.betId ? ` · bet` : ''}
                     </td>
                     <td className={`${dash.td} text-muted-foreground`}>{fmtWhenShort(e.createdAt)}</td>
                   </tr>
@@ -94,14 +130,6 @@ export function PayoutHistoryLedgerTable({
             </tbody>
           </table>
         </div>
-        {entries.length > 0 ? (
-          <div className={dash.summaryBar}>
-            <span className="text-muted-foreground">Net (ledger)</span>
-            <span className="tabular-nums text-destructive">
-              {Number.isFinite(total) ? signedMoney(String(total.toFixed(2))) : '—'}
-            </span>
-          </div>
-        ) : null}
       </CardContent>
     </Card>
   )

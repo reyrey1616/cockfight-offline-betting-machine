@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatBetListOdds,
+  betListOddsForSide,
   boardOddsForSide,
   buildFightBoardTicker,
   computePayoutFromOdds,
@@ -192,6 +194,28 @@ describe('resolveBoardOddsForSide', () => {
   it('keeps live odds when the API provides them', () => {
     const fight = makeFight({ status: 'OPEN', meronOdds: 2.45, walaOdds: 1.88 })
     expect(resolveBoardOddsForSide(fight, 'MERON', fight.commissionRate)).toBe(2.45)
+  })
+})
+
+describe('betListOddsForSide', () => {
+  it('shows pool odds for a losing side after settlement', () => {
+    const lostMeron = {
+      side: 'MERON' as const,
+      meronOdds: 2.7688,
+      walaOdds: 1.389,
+      status: 'LOST' as const
+    }
+    expect(betListOddsForSide(lostMeron)).toBe(2.7688)
+    expect(formatBetListOdds(lostMeron)).toBe('276.88')
+  })
+
+  it('shows pool odds for the winning side too', () => {
+    const wonWala = {
+      side: 'WALA' as const,
+      meronOdds: 1.4531,
+      walaOdds: 2.5449
+    }
+    expect(formatBetListOdds(wonWala)).toBe('254.49')
   })
 })
 

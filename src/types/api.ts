@@ -530,9 +530,16 @@ export interface LedgerEntryRow {
   amount: string
   betId: string | null
   collectorId: string | null
+  collectorName?: string | null
   adjustedByUserId: string | null
   notes: string | null
   createdAt: string
+  /** Present when the ledger row is joined to a bet (e.g. PAYOUT). */
+  betAmount?: string | null
+  betSide?: 'MERON' | 'WALA' | null
+  betPayoutAmount?: string | null
+  payoutRatioMeron?: string | null
+  payoutRatioWala?: string | null
 }
 
 export interface ListLedgerQuery {

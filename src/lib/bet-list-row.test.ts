@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { betListRowFromLookup, toBetListRow } from '@/lib/bet-list-row'
+import { formatBetListOdds } from '@/lib/fight-board-derive'
 import { makeBetRow } from '@/test/fixtures'
 
 const fightSummary = {
@@ -9,8 +10,8 @@ const fightSummary = {
   status: 'SETTLED' as const,
   meronPool: '1000.00',
   walaPool: '500.00',
-  meronOdds: null,
-  walaOdds: null,
+  meronOdds: 1.425,
+  walaOdds: 2.85,
   payoutRatioMeron: '1.50',
   payoutRatioWala: '2.00'
 }
@@ -32,5 +33,12 @@ describe('bet-list-row', () => {
 
     expect(row.code).toBe('QKY6ULIT')
     expect(row.fightNumber).toBe(9)
+  })
+
+  it('formats losing bet odds from pool snapshot on the list row', () => {
+    const bet = makeBetRow({ side: 'MERON', status: 'LOST' })
+    const row = toBetListRow(bet, fightSummary)
+
+    expect(formatBetListOdds(row)).toBe('142.50')
   })
 })

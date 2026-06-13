@@ -10,6 +10,13 @@ import { listLedger } from '@/lib/api-cash'
 import { cn } from '@/lib/utils'
 import type { LedgerEntryTypeWire } from '@/types/api'
 
+const COLUMN_COUNT = 5
+
+function ledgerRemarks(notes: string | null | undefined, fallback: string, code: string | null) {
+  const base = notes?.trim() || fallback
+  return code ? `${base} · ${code}` : base
+}
+
 function signedMoney(amount: string) {
   const n = Number(amount)
   if (Number.isNaN(n)) return amount
@@ -66,7 +73,8 @@ export function CashFlowLedgerTable({
           <table className={dash.table}>
             <thead className={dash.thead}>
               <tr className="border-b border-border/60">
-                <th className={dash.th}>User</th>
+                <th className={dash.th}>Teller</th>
+                <th className={dash.th}>Collector</th>
                 <th className={dash.th}>Amount</th>
                 <th className={dash.th}>Remarks</th>
                 <th className={dash.th}>Date</th>
@@ -75,19 +83,19 @@ export function CashFlowLedgerTable({
             <tbody>
               {q.isLoading ? (
                 <tr>
-                  <td colSpan={4} className={dash.empty}>
+                  <td colSpan={COLUMN_COUNT} className={dash.empty}>
                     Loading…
                   </td>
                 </tr>
               ) : q.isError ? (
                 <tr>
-                  <td colSpan={4} className={`${dash.empty} text-destructive`}>
+                  <td colSpan={COLUMN_COUNT} className={`${dash.empty} text-destructive`}>
                     Could not load ledger.
                   </td>
                 </tr>
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className={dash.empty}>
+                  <td colSpan={COLUMN_COUNT} className={dash.empty}>
                     No cash advances in view.
                   </td>
                 </tr>
@@ -95,10 +103,10 @@ export function CashFlowLedgerTable({
                 entries.map((e) => (
                   <tr key={e.id} className={dash.row}>
                     <td className={`${dash.td} font-medium`}>{resolveTellerName(e.tellerId)}</td>
+                    <td className={dash.td}>{e.collectorName?.trim() || '—'}</td>
                     <td className={dash.tdNum}>{signedMoney(e.amount)}</td>
                     <td className={`${dash.td} text-muted-foreground`}>
-                      {e.notes?.trim() || 'Cash advance'}
-                      {e.code ? ` · ${e.code}` : ''}
+                      {ledgerRemarks(e.notes, 'Cash advance', e.code)}
                     </td>
                     <td className={`${dash.td} text-muted-foreground`}>{fmtWhenShort(e.createdAt)}</td>
                   </tr>

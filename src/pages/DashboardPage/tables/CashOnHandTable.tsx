@@ -5,6 +5,7 @@ import { dash } from '@/pages/DashboardPage/dashboard-dense'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { formatMoney } from '@/lib/format-money'
 import { getCashBalance } from '@/lib/api-cash'
+import { cn } from '@/lib/utils'
 
 export interface CashOnHandTableProps {
   tellerIds: string[]
@@ -74,9 +75,9 @@ export function CashOnHandTable({ tellerIds, panelClassName }: CashOnHandTablePr
           </table>
         </div>
         {rows.length > 0 ? (
-          <div className={dash.summaryBar}>
+          <div className={cn(dash.summaryBar, 'flex items-center justify-between gap-2')}>
             <span className="text-muted-foreground">Total cash</span>
-            <span className="tabular-nums text-primary">
+            <span className="text-sm font-bold tabular-nums text-primary">
               {Number.isFinite(total) ? formatMoney(String(total.toFixed(2))) : '—'}
             </span>
           </div>

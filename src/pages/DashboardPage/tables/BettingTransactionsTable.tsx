@@ -12,7 +12,7 @@ import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { ApiError } from '@/lib/api'
 import { getBetByCode, listBets } from '@/lib/api-bets'
 import { betListRowFromLookup } from '@/lib/bet-list-row'
-import { boardOddsForSide, formatBoardOdds } from '@/lib/fight-board-derive'
+import { formatBetListOdds } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import {
   isCompleteTicketCode,
@@ -29,20 +29,6 @@ function formatBetPayout(bet: BetListRow): string {
   if (bet.payoutAmount == null || bet.payoutAmount === '') return '—'
   if (bet.status === 'LOST' || bet.status === 'VOIDED' || bet.status === 'REFUNDED') return '—'
   return formatMoney(bet.payoutAmount)
-}
-
-function formatBetOdds(bet: BetListRow): string {
-  const odds = boardOddsForSide(
-    {
-      status: bet.fightStatus,
-      meronOdds: bet.meronOdds,
-      walaOdds: bet.walaOdds,
-      payoutRatioMeron: bet.payoutRatioMeron,
-      payoutRatioWala: bet.payoutRatioWala
-    },
-    bet.side
-  )
-  return formatBoardOdds(odds)
 }
 
 function betMatchesTellerScope(bet: BetListRow, tellerId?: string): boolean {
@@ -66,7 +52,7 @@ function BettingTransactionRows({
           </td>
           <td className={`${dash.td} font-mono text-[11px] font-semibold tracking-wide`}>{b.code}</td>
           <td className={`${dash.tdNum} text-right`}>{formatMoney(b.amount)}</td>
-          <td className={`${dash.tdNum} text-center`}>{formatBetOdds(b)}</td>
+          <td className={`${dash.tdNum} text-center`}>{formatBetListOdds(b)}</td>
           <td className={`${dash.tdNum} text-right`}>{formatBetPayout(b)}</td>
           <td className={dash.td}>{BET_SIDE_LABEL[b.side]}</td>
           <td className={`${dash.tdNum} text-center font-semibold`}>{b.fightNumber}</td>
@@ -243,7 +229,7 @@ export function BettingTransactionsTable({
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="Type or scan 8-character code"
-                className="mt-1 h-8 font-mono text-xs uppercase tracking-wide"
+                className="mt-1 h-10 bg-white font-mono text-xs uppercase tracking-wide dark:bg-white"
               />
             </div>
             {isLookupView ? (
