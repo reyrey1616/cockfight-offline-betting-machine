@@ -3,16 +3,19 @@ import type { FightStatusValue } from '@/constants'
 import { computeLiveOdds } from '@/lib/compute-live-odds'
 import type { Fight, FightOutcomeWire, FightWelcomeSnapshot } from '@/types/api'
 
+/**
+ * Fight to show on the board / live desk. API lists `current` fights by
+ * fightNumber desc — take the newest row that is still meaningful to display
+ * (not cancelled / legacy scheduled).
+ */
 export function pickCurrentDisplayFight(
   fights: Fight[] | undefined
 ): Fight | undefined {
   if (!fights?.length) return undefined
-  return (
-    fights.find((f) => f.status === 'OPEN') ??
-    fights.find((f) => f.status === 'LAST_CALL') ??
-    fights.find((f) => f.status === 'CLOSED') ??
-    fights[0]
+  const eligible = fights.filter(
+    (f) => f.status !== 'CANCELLED' && f.status !== 'SCHEDULED'
   )
+  return eligible[0] ?? fights[0]
 }
 
 /** `WELCOME.data.currentFight` — synthesize a full `Fight` for UI + merges. */

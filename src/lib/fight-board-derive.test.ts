@@ -161,8 +161,8 @@ describe('defaultBoardOddsMultiplier', () => {
 })
 
 describe('resolveBoardOddsForSide', () => {
-  it('falls back to default when no fight or empty pools', () => {
-    expect(resolveBoardOddsForSide(null, 'MERON', 0.15)).toBe(1.85)
+  it('falls back to default only while OPEN with empty pools', () => {
+    expect(resolveBoardOddsForSide(null, 'MERON', 0.15)).toBeNull()
     const openEmpty = makeFight({
       status: 'OPEN',
       meronPool: '0',
@@ -172,6 +172,21 @@ describe('resolveBoardOddsForSide', () => {
       commissionRate: '0.1500'
     })
     expect(resolveBoardOddsForSide(openEmpty, 'WALA', openEmpty.commissionRate)).toBe(1.85)
+  })
+
+  it('keeps last open odds on both sides after settlement', () => {
+    const settledWalaWin = makeFight({
+      status: 'SETTLED',
+      outcome: 'WALA',
+      payoutRatioMeron: null,
+      payoutRatioWala: '2.5449',
+      meronOdds: 1.8543,
+      walaOdds: 2.5449
+    })
+    expect(resolveBoardOddsForSide(settledWalaWin, 'MERON', 0.15)).toBe(1.8543)
+    expect(resolveBoardOddsForSide(settledWalaWin, 'WALA', 0.15)).toBe(2.5449)
+    expect(formatBoardOdds(resolveBoardOddsForSide(settledWalaWin, 'MERON', 0.15))).toBe('185.43')
+    expect(formatBoardOdds(resolveBoardOddsForSide(settledWalaWin, 'WALA', 0.15))).toBe('254.49')
   })
 
   it('keeps live odds when the API provides them', () => {
@@ -190,13 +205,13 @@ describe('boardOddsForSide', () => {
     expect(boardOddsForSide(fight, 'MERON')).toBe(2.45)
   })
 
-  it('uses frozen payout ratio after settlement', () => {
+  it('keeps last open odds after settlement (not payout ratio)', () => {
     const fight = makeFight({
       status: 'SETTLED',
       meronOdds: 2.45,
       payoutRatioMeron: '2.3020'
     })
-    expect(boardOddsForSide(fight, 'MERON')).toBe(2.302)
+    expect(boardOddsForSide(fight, 'MERON')).toBe(2.45)
   })
 })
 

@@ -60,7 +60,10 @@ function liveFightReducer(
     case 'REST_BOOTSTRAP': {
       const pick = action.fight
       if (!pick) return state
-      if (!state.fight || state.fight.id !== pick.id) return { fight: pick }
+      if (!state.fight) return { fight: pick }
+      // Do not replace a newer fight (WS / mutation) with an older CLOSED row
+      // after settlement — REST `current` used to omit SETTLED and pick #10.
+      if (pick.fightNumber > state.fight.fightNumber) return { fight: pick }
       return state
     }
     case 'MERGE_ODDS': {

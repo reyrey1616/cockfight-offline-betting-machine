@@ -7,8 +7,9 @@ function toNumber(decimalLike: string | number | null | undefined): number {
   return Number(decimalLike)
 }
 
-function floor2(n: number): number {
-  return Math.floor(n * 100) / 100
+/** Match API `floorPayoutMultiplier` — 4 dp on ratio, not 2. */
+function floorPayoutMultiplier(ratio: number): number {
+  return Math.floor(ratio * 10000) / 10000
 }
 
 function poolDistributable(
@@ -30,8 +31,9 @@ export function computeLiveOdds(fight: {
   const commission = toNumber(fight.commissionRate)
   const distributable = poolDistributable(meron, wala, commission)
 
-  const meronOdds = meron > 0 ? floor2(distributable / meron) : null
-  const walaOdds = wala > 0 ? floor2(distributable / wala) : null
+  const meronOdds =
+    meron > 0 ? floorPayoutMultiplier(distributable / meron) : null
+  const walaOdds = wala > 0 ? floorPayoutMultiplier(distributable / wala) : null
 
   return { meronOdds, walaOdds }
 }

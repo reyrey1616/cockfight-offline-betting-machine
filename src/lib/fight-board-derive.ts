@@ -179,20 +179,14 @@ export function formatPayoutReceiptOdds(
 }
 
 /**
- * Odds shown on the board for one side: live projection while betting is open,
- * frozen settlement payout ratio after the fight is SETTLED.
+ * Odds on the fight board: always the last live projection from frozen pools
+ * (same values shown while OPEN). Settlement payout ratios are for tickets only.
  */
 export function boardOddsForSide(
-  fight: Pick<
-    Fight,
-    'status' | 'meronOdds' | 'walaOdds' | 'payoutRatioMeron' | 'payoutRatioWala'
-  > | null,
+  fight: Pick<Fight, 'meronOdds' | 'walaOdds'> | null,
   side: 'MERON' | 'WALA'
 ): number | null {
   if (fight == null) return null
-  if (fight.status === FIGHT_STATUS_VALUE.SETTLED) {
-    return settledOddsForSide(fight, side)
-  }
   return side === 'MERON' ? fight.meronOdds : fight.walaOdds
 }
 
@@ -206,16 +200,24 @@ export function defaultBoardOddsMultiplier(commissionRate: string | number): num
   return 2 * (1 - c / 2)
 }
 
-/** Live/settled odds when known; otherwise the commission-based default payout. */
+/** Live/settled odds when known; default payout only while OPEN with no pool yet. */
 export function resolveBoardOddsForSide(
-  fight: Pick<
-    Fight,
-    'status' | 'meronOdds' | 'walaOdds' | 'payoutRatioMeron' | 'payoutRatioWala'
-  > | null,
+  fight: Pick<Fight, 'status' | 'meronOdds' | 'walaOdds'> | null,
   side: 'MERON' | 'WALA',
   commissionRate: string | number
-): number {
-  return boardOddsForSide(fight, side) ?? defaultBoardOddsMultiplier(commissionRate)
+): number | null {
+  const odds = boardOddsForSide(fight, side)
+  if (odds != null) return odds
+
+  if (
+    fight != null &&
+    (fight.status === FIGHT_STATUS_VALUE.OPEN ||
+      fight.status === FIGHT_STATUS_VALUE.LAST_CALL)
+  ) {
+    return defaultBoardOddsMultiplier(commissionRate)
+  }
+
+  return null
 }
 
 export function buildFightBoardTicker(
