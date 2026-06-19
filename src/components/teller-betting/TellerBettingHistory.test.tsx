@@ -109,12 +109,12 @@ describe('TellerBettingHistory', () => {
     await user.type(screen.getByLabelText(/cancel ticket/i), 'TKT99999')
     await screen.findByRole('heading', { name: /cancel ticket/i })
 
-    await user.type(screen.getByLabelText(/admin authorization/i), 'admin2026@')
+    await user.type(screen.getByLabelText(/admin authorization/i), '$$$$$$$$$')
     await user.click(screen.getByRole('button', { name: /^cancel ticket$/i }))
 
     await waitFor(() => {
       expect(voidMutate).toHaveBeenCalledWith(
-        { betId: 'bet-void-1', body: { adminPassword: 'admin2026@' } },
+        { betId: 'bet-void-1', body: { adminPassword: '$$$$$$$$$' } },
         expect.any(Object)
       )
     })

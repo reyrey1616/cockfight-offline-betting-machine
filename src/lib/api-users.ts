@@ -6,6 +6,7 @@ import type {
   ListUsersResponse,
   ResetUserPasswordRequest,
   ResetUserPasswordResponse,
+  TellerLoginBarcodeResponse,
   UpdateUserRequest,
   UpdateUserResponse
 } from '@/types/api'
@@ -44,5 +45,13 @@ export async function resetUserPassword(
     `/users/${id}/password`,
     body
   )
+  return data
+}
+
+/** GET /users/:id/barcode — admin teller login badge payload. Hook: `useTellerLoginBarcode`. */
+export async function getTellerLoginBarcode(
+  id: string
+): Promise<TellerLoginBarcodeResponse> {
+  const { data } = await api.get<TellerLoginBarcodeResponse>(`/users/${id}/barcode`)
   return data
 }

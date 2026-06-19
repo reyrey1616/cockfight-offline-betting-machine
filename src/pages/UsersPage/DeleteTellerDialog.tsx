@@ -1,23 +1,22 @@
 import { useEffect, useRef } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { nativeModalDialogClassName } from '@/lib/nativeModalDialogClassName'
 import type { AdminUser } from '@/types/api'
 
-import { nativeModalDialogClassName } from '@/lib/nativeModalDialogClassName'
-
-export interface DeactivateTellerDialogProps {
+export interface DeleteTellerDialogProps {
   user: AdminUser | null
   onClose: () => void
-  isConfirming: boolean
+  isDeleting: boolean
   onConfirm: () => void
 }
 
-export function DeactivateTellerDialog({
+export function DeleteTellerDialog({
   user,
   onClose,
-  isConfirming,
+  isDeleting,
   onConfirm
-}: DeactivateTellerDialogProps) {
+}: DeleteTellerDialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export function DeactivateTellerDialog({
       className={nativeModalDialogClassName()}
       onCancel={(e) => {
         e.preventDefault()
-        if (!isConfirming) onClose()
+        if (!isDeleting) onClose()
       }}
       onClose={() => {
         onClose()
@@ -44,24 +43,24 @@ export function DeactivateTellerDialog({
     >
       <div className="flex flex-col gap-4 p-6">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Turn off access?</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Delete from this list?</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{user?.fullName}</span> (
-            {user?.username}) will not be able to sign in until an admin turns access
-            back on. Their history stays on file for audit.
+            {user?.username}) will disappear from the tellers table and cannot sign in. Past bets
+            and ledger entries stay on file for audit — the server does not erase that history.
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isConfirming}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancel
           </Button>
           <Button
             type="button"
             variant="destructive"
             onClick={onConfirm}
-            disabled={isConfirming}
+            disabled={isDeleting}
           >
-            {isConfirming ? 'Saving…' : 'Turn off access'}
+            {isDeleting ? 'Deleting…' : 'Delete'}
           </Button>
         </div>
       </div>

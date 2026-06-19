@@ -58,8 +58,8 @@ export function AdminVoidBarcodeSection() {
       <CardHeader>
         <CardTitle>Admin void barcode</CardTitle>
         <CardDescription>
-          CODE128 encodes the admin login password. Scan at the teller kiosk to authorize voiding
-          bet tickets. The password is not shown on screen — print a copy for the pit desk.
+          CODE128 encodes a fixed void authorization secret. Scan at the teller kiosk to
+          authorize cancelling bet tickets. Print a copy for the pit desk.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">

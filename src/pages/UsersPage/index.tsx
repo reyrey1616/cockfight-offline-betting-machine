@@ -2,6 +2,8 @@
 //
 // Client-side checks mirror `users.schemas.js` so tellers get fast feedback;
 // the API remains the source of truth (policy denylist, uniqueness, etc.).
+// “Delete” calls PATCH `isActive: false` (no hard DELETE on the server); this view only loads
+// active tellers so the row disappears after delete.
 
 import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
@@ -23,8 +25,9 @@ import { ApiError } from '@/lib/api'
 import { useAuthUser } from '@/store/auth'
 import type { AdminUser } from '@/types/api'
 
-import { DeactivateTellerDialog } from './DeactivateTellerDialog'
+import { DeleteTellerDialog } from './DeleteTellerDialog'
 import { EditTellerDialog } from './EditTellerDialog'
+import { TellerBarcodePrintDialog } from './TellerBarcodePrintDialog'
 import { TellersTable } from './TellersTable'
 
 /** Same as backend `usernamePattern`: first 3 alphabetic, then alnum or _. */
@@ -62,7 +65,8 @@ export function UsersPage() {
   const { mutate, isPending, error } = useCreateUser()
   const me = useAuthUser()
   const [editing, setEditing] = useState<AdminUser | null>(null)
-  const [deactivateTarget, setDeactivateTarget] = useState<AdminUser | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+  const [barcodePreview, setBarcodePreview] = useState<AdminUser | null>(null)
   const { mutate: patchTeller, isPending: patchPending } = useUpdateUser()
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -91,7 +95,7 @@ export function UsersPage() {
           setFullName('')
           setClientErrors({})
           toast.success(`“${data.user.username}” is ready`, {
-            description: `They sign in as a teller. Ticket initials: ${data.user.initials}.`
+            description: `Ticket initials: ${data.user.initials}. Open Barcode to preview and print the login badge.`
           })
         }
       }
@@ -111,9 +115,10 @@ export function UsersPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Tellers</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Tellers sign in here to take bets. Edit a row to change their name, access, or
-          password. Accounts are never permanently deleted — you can only turn access off
-          for audit reasons.
+          Tellers sign in here to take bets. Use{' '}
+          <span className="font-medium text-foreground">Barcode</span> to print a login badge
+          (CODE128 encodes their password). Edit a row to change their name or password. Delete
+          removes them from this list; bet and ledger history stays on the server.
         </p>
       </div>
 
@@ -125,18 +130,10 @@ export function UsersPage() {
           listMessage={listMessage}
           onRefresh={() => void refetch()}
           currentUserId={me?.id}
-          patchPending={patchPending}
+          deletePending={patchPending}
           onEdit={setEditing}
-          onDeactivateClick={setDeactivateTarget}
-          onReactivate={(u) => {
-            patchTeller(
-              { id: u.id, body: { isActive: true } },
-              {
-                onSuccess: () =>
-                  toast.success(`“${u.username}” can sign in again.`)
-              }
-            )
-          }}
+          onDeleteClick={setDeleteTarget}
+          onOpenBarcodePrint={setBarcodePreview}
         />
 
         <Card className="max-w-md lg:max-w-none">
@@ -232,18 +229,22 @@ export function UsersPage() {
         currentUserId={me?.id}
         onClose={() => setEditing(null)}
       />
-      <DeactivateTellerDialog
-        user={deactivateTarget}
-        onClose={() => setDeactivateTarget(null)}
-        isConfirming={patchPending}
+      <TellerBarcodePrintDialog
+        teller={barcodePreview}
+        onClose={() => setBarcodePreview(null)}
+      />
+      <DeleteTellerDialog
+        user={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        isDeleting={patchPending}
         onConfirm={() => {
-          if (!deactivateTarget) return
+          if (!deleteTarget) return
           patchTeller(
-            { id: deactivateTarget.id, body: { isActive: false } },
+            { id: deleteTarget.id, body: { isActive: false } },
             {
               onSuccess: () => {
-                toast.success(`Access is off for “${deactivateTarget.username}”.`)
-                setDeactivateTarget(null)
+                toast.success(`Removed “${deleteTarget.username}” from the list.`)
+                setDeleteTarget(null)
               },
               onError: (err) => {
                 const msg =

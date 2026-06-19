@@ -16,10 +16,10 @@ export interface TellersTableProps {
   listMessage: string | undefined
   onRefresh: () => void
   currentUserId: string | undefined
-  patchPending: boolean
+  deletePending: boolean
   onEdit: (user: AdminUser) => void
-  onDeactivateClick: (user: AdminUser) => void
-  onReactivate: (user: AdminUser) => void
+  onDeleteClick: (user: AdminUser) => void
+  onOpenBarcodePrint: (user: AdminUser) => void
 }
 
 export function TellersTable({
@@ -29,10 +29,10 @@ export function TellersTable({
   listMessage,
   onRefresh,
   currentUserId,
-  patchPending,
+  deletePending,
   onEdit,
-  onDeactivateClick,
-  onReactivate
+  onDeleteClick,
+  onOpenBarcodePrint
 }: TellersTableProps) {
   return (
     <Card>
@@ -40,8 +40,8 @@ export function TellersTable({
         <div>
           <CardTitle>Tellers</CardTitle>
           <CardDescription className="mt-1.5">
-            Edit names, passwords, or whether someone can sign in. Inactive tellers stay in
-            the list for history.
+            Only active tellers appear here. Use Barcode to print a login badge (password encoded).
+            Delete removes a row from this list; use Edit to change names or passwords.
           </CardDescription>
         </div>
         <Button
@@ -74,7 +74,6 @@ export function TellersTable({
                   <th className="px-3 py-2 font-medium">Name</th>
                   <th className="px-3 py-2 font-medium">Username</th>
                   <th className="px-3 py-2 font-medium">Initials</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
@@ -85,18 +84,15 @@ export function TellersTable({
                     <td className="px-3 py-2 text-muted-foreground">{u.username}</td>
                     <td className="px-3 py-2 font-mono text-muted-foreground">{u.initials}</td>
                     <td className="px-3 py-2">
-                      {u.isActive ? (
-                        <span className="inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                          Inactive
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onOpenBarcodePrint(u)}
+                        >
+                          Barcode
+                        </Button>
                         <Button
                           type="button"
                           size="sm"
@@ -105,26 +101,16 @@ export function TellersTable({
                         >
                           Edit
                         </Button>
-                        {u.isActive && u.id !== currentUserId ? (
+                        {u.id !== currentUserId ? (
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
                             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            onClick={() => onDeactivateClick(u)}
+                            disabled={deletePending}
+                            onClick={() => onDeleteClick(u)}
                           >
-                            Turn off access
-                          </Button>
-                        ) : null}
-                        {!u.isActive ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={patchPending}
-                            onClick={() => onReactivate(u)}
-                          >
-                            Turn on access
+                            Delete
                           </Button>
                         ) : null}
                       </div>

@@ -22,7 +22,7 @@ export function CashOnHandTable({ tellerIds, panelClassName }: CashOnHandTablePr
     staleTime: 5_000
   })
 
-  const rows = q.data ?? []
+  const rows = (q.data ?? []).filter((r) => Number(r.balance) > 0)
   const total = rows.reduce((s, r) => s + Number(r.balance), 0)
 
   return (
@@ -59,6 +59,12 @@ export function CashOnHandTable({ tellerIds, panelClassName }: CashOnHandTablePr
                 <tr>
                   <td colSpan={4} className={`${dash.empty} text-destructive`}>
                     Could not load balances.
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className={dash.empty}>
+                    No tellers with cash on hand.
                   </td>
                 </tr>
               ) : (

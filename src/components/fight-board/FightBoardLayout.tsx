@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 import { AppLogo } from '@/components/AppLogo'
 import { cn } from '@/lib/utils'
@@ -11,7 +11,12 @@ import {
   type FightBoardSessionStats
 } from '@/lib/fight-board-derive'
 import type { FightStatusValue } from '@/constants'
-import clsx from 'clsx'
+
+/** Fight board brand colors (reference layout). */
+const BOARD_MERON = '#cd1512'
+const BOARD_WALA = '#102a71'
+const BOARD_ODDS = '#ff690c'
+
 export interface FightBoardLayoutProps {
   meronPool: string
   walaPool: string
@@ -38,7 +43,7 @@ function statusPillClass(status: FightStatusValue | null): string {
     case 'LAST_CALL':
       return 'bg-amber-400 text-black font-black shadow-[0_0_20px_rgba(251,191,36,0.6)]'
     case 'CLOSED':
-      return 'bg-amber-400 text-black font-bold'
+      return 'bg-red-600 text-white font-black shadow-[0_0_20px_rgba(220,38,38,0.65)]'
     case 'SETTLED':
       return 'bg-sky-500 text-white font-bold'
     case 'CANCELLED':
@@ -118,15 +123,26 @@ function tickerBarClasses(status: FightStatusValue | null): { bar: string; text:
 function historyRowClass(result: FightBoardHistoryRow['result']): string {
   switch (result) {
     case 'MERON':
-      return 'bg-red-600 text-white'
+      return 'text-white'
     case 'WALA':
-      return 'bg-blue-600 text-white'
+      return 'text-white'
     case 'DRAW':
       return 'bg-emerald-600 text-white'
     case 'CANCELLED':
       return 'bg-zinc-600 text-white'
     default:
       return 'bg-zinc-700 text-white'
+  }
+}
+
+function historyRowStyle(result: FightBoardHistoryRow['result']): CSSProperties | undefined {
+  switch (result) {
+    case 'MERON':
+      return { backgroundColor: BOARD_MERON }
+    case 'WALA':
+      return { backgroundColor: BOARD_WALA }
+    default:
+      return undefined
   }
 }
 
@@ -139,8 +155,8 @@ function sideOddsDisplay(
 ): ReactNode {
   const oddsText = formatBoardOdds(odds)
   const oddsClass = cn(
-    'font-black tabular-nums tracking-tight text-orange-400',
-    bettingOpen ? 'text-4xl lg:text-5xl' : 'text-3xl lg:text-4xl'
+    'font-black tabular-nums tracking-tight',
+    bettingOpen ? 'text-5xl lg:text-6xl xl:text-7xl' : 'text-4xl lg:text-5xl xl:text-6xl'
   )
   if (sideHeld) {
     return (
@@ -152,15 +168,19 @@ function sideOddsDisplay(
           No new {heldLabel} bets (admin)
         </p>
         {odds != null ? (
-          <p className={cn(oddsClass, 'text-orange-300')}>{oddsText}</p>
+          <p className={oddsClass} style={{ color: BOARD_ODDS }}>
+            {oddsText}
+          </p>
         ) : null}
       </div>
     )
   }
   return (
     <div className="space-y-1">
-      <p className={oddsClass}>{oddsText}</p>
-      <p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+      <p className={oddsClass} style={{ color: BOARD_ODDS }}>
+        {oddsText}
+      </p>
+      <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 lg:text-sm">
         {bettingOpen ? 'Payout ×' : fightSettled ? 'Final payout ×' : 'Last odds'}
       </p>
     </div>
@@ -198,10 +218,13 @@ export function FightBoardLayout({
         full ? 'min-h-dvh' : 'min-h-[420px] overflow-hidden rounded-xl border border-zinc-800 shadow-xl'
       )}
     >
-      <div className="grid flex-1 grid-cols-1 gap-0 lg:grid-cols-[1fr_minmax(220px,320px)_1fr]">
+      <div className="grid flex-1 grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1.25fr)_minmax(200px,280px)_minmax(0,1.25fr)]">
         {/* Meron column */}
-        <div className="flex min-h-[280px] flex-col border-b border-zinc-800 lg:border-b-0 lg:border-r">
-          <div className="bg-red-600 py-4 text-center text-2xl font-black tracking-widest text-white lg:text-3xl">
+        <div className="flex min-h-[320px] flex-col border-b border-zinc-800 lg:min-h-[380px] lg:border-b-0 lg:border-r">
+          <div
+            className="py-6 text-center text-4xl font-black tracking-[0.2em] text-white lg:py-8 lg:text-5xl xl:text-6xl"
+            style={{ backgroundColor: BOARD_MERON }}
+          >
             MERON
           </div>
           {bettingOpen && meronSideHeld ? (
@@ -221,18 +244,21 @@ export function FightBoardLayout({
               !bettingOpen && 'opacity-90'
             )}
           >
-            <div className="border-b border-zinc-300 px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-zinc-600">
+            <div className="border-b border-zinc-300 px-3 py-3 text-center text-sm font-black uppercase tracking-wide text-zinc-700 lg:text-base">
               Total bets
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-2 py-6">
-              <p className={clsx("text-[64px] font-black tabular-nums tracking-tight",
-                meronPool.length >=6 && "text-[48px]!"
-              )}>
+            <div className="flex flex-1 flex-col items-center justify-center px-2 py-8">
+              <p
+                className={cn(
+                  'text-6xl font-black tabular-nums tracking-tight lg:text-7xl xl:text-8xl',
+                  meronPool.length >= 6 && 'text-5xl! lg:text-6xl! xl:text-7xl!'
+                )}
+              >
                 {formatMoney(meronPool)}
               </p>
               <div
                 className={cn(
-                  'mt-6 w-full max-w-[280px] bg-white px-4 py-6 text-center shadow-inner',
+                  'mt-8 w-full max-w-[340px] bg-white px-5 py-8 text-center shadow-inner lg:max-w-[380px]',
                   bettingOpen && meronSideHeld && 'ring-4 ring-amber-500 ring-inset'
                 )}
               >
@@ -240,8 +266,11 @@ export function FightBoardLayout({
               </div>
             </div>
           </div>
-          <div className="border-t border-red-900 bg-red-800 py-2 text-center text-sm font-bold uppercase tracking-widest text-white">
-            Payout
+          <div
+            className="border-t border-black/20 py-4 text-center text-base font-black uppercase tracking-[0.25em] text-white lg:text-lg"
+            style={{ backgroundColor: BOARD_MERON }}
+          >
+            Payouts
           </div>
         </div>
 
@@ -255,9 +284,14 @@ export function FightBoardLayout({
           </div>
 
           <div className="grid grid-cols-3 gap-2 p-3">
-            <div className="rounded border border-red-800/60 bg-red-950/80 py-3 text-center">
-              <div className="text-[10px] font-bold uppercase text-red-200">Meron</div>
-              <div className="text-3xl font-black tabular-nums text-red-100">
+            <div
+              className="rounded border py-3 text-center"
+              style={{ borderColor: `${BOARD_MERON}99`, backgroundColor: `${BOARD_MERON}33` }}
+            >
+              <div className="text-[10px] font-bold uppercase lg:text-xs" style={{ color: BOARD_MERON }}>
+                Meron
+              </div>
+              <div className="text-3xl font-black tabular-nums text-red-100 lg:text-4xl">
                 {sessionStats.meronWins}
               </div>
             </div>
@@ -267,9 +301,14 @@ export function FightBoardLayout({
                 {sessionStats.draws}
               </div>
             </div>
-            <div className="rounded border border-blue-800/60 bg-blue-950/80 py-3 text-center">
-              <div className="text-[10px] font-bold uppercase text-blue-200">Wala</div>
-              <div className="text-3xl font-black tabular-nums text-blue-100">
+            <div
+              className="rounded border py-3 text-center"
+              style={{ borderColor: `${BOARD_WALA}99`, backgroundColor: `${BOARD_WALA}33` }}
+            >
+              <div className="text-[10px] font-bold uppercase lg:text-xs" style={{ color: BOARD_WALA }}>
+                Wala
+              </div>
+              <div className="text-3xl font-black tabular-nums text-blue-100 lg:text-4xl">
                 {sessionStats.walaWins}
               </div>
             </div>
@@ -288,7 +327,7 @@ export function FightBoardLayout({
             </span>
             <span
               className={cn(
-                'rounded-md px-4 py-1.5 text-sm uppercase tracking-wide',
+                'rounded-md px-4 py-2 text-sm uppercase tracking-wide lg:text-base',
                 statusPillClass(fightStatus)
               )}
             >
@@ -335,6 +374,7 @@ export function FightBoardLayout({
                       'min-w-[4.5rem] rounded px-3 py-1 text-center text-xs uppercase',
                       historyRowClass(row.result)
                     )}
+                    style={historyRowStyle(row.result)}
                   >
                     {row.result}
                   </span>
@@ -345,8 +385,11 @@ export function FightBoardLayout({
         </div>
 
         {/* Wala column */}
-        <div className="flex min-h-[280px] flex-col">
-          <div className="bg-blue-600 py-4 text-center text-2xl font-black tracking-widest text-white lg:text-3xl">
+        <div className="flex min-h-[320px] flex-col lg:min-h-[380px]">
+          <div
+            className="py-6 text-center text-4xl font-black tracking-[0.2em] text-white lg:py-8 lg:text-5xl xl:text-6xl"
+            style={{ backgroundColor: BOARD_WALA }}
+          >
             WALA
           </div>
           {bettingOpen && walaSideHeld ? (
@@ -366,18 +409,21 @@ export function FightBoardLayout({
               !bettingOpen && 'opacity-90'
             )}
           >
-            <div className="border-b border-zinc-300 px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-zinc-600">
+            <div className="border-b border-zinc-300 px-3 py-3 text-center text-sm font-black uppercase tracking-wide text-zinc-700 lg:text-base">
               Total bets
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-2 py-6">
-              <p className={clsx("text-[64px] font-black tabular-nums tracking-tight",
-                walaPool.length >=6 && "!text-[48px]"
-              )}>
+            <div className="flex flex-1 flex-col items-center justify-center px-2 py-8">
+              <p
+                className={cn(
+                  'text-6xl font-black tabular-nums tracking-tight lg:text-7xl xl:text-8xl',
+                  walaPool.length >= 6 && 'text-5xl! lg:text-6xl! xl:text-7xl!'
+                )}
+              >
                 {formatMoney(walaPool)}
               </p>
               <div
                 className={cn(
-                  'mt-6 w-full max-w-[280px] bg-white px-4 py-6 text-center shadow-inner',
+                  'mt-8 w-full max-w-[340px] bg-white px-5 py-8 text-center shadow-inner lg:max-w-[380px]',
                   bettingOpen && walaSideHeld && 'ring-4 ring-amber-500 ring-inset'
                 )}
               >
@@ -385,8 +431,11 @@ export function FightBoardLayout({
               </div>
             </div>
           </div>
-          <div className="border-t border-blue-900 bg-blue-800 py-2 text-center text-sm font-bold uppercase tracking-widest text-white">
-            Payout
+          <div
+            className="border-t border-black/20 py-4 text-center text-base font-black uppercase tracking-[0.25em] text-white lg:text-lg"
+            style={{ backgroundColor: BOARD_WALA }}
+          >
+            Payouts
           </div>
         </div>
       </div>

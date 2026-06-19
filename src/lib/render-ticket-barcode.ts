@@ -28,6 +28,22 @@ export function collectorCodeToBarcodeDataUrl(code: string): string {
   return canvas.toDataURL('image/png')
 }
 
+/** CODE128 PNG for login credentials — narrows bars as payload length grows. */
+export function credentialToBarcodeDataUrl(value: string): string {
+  const canvas = document.createElement('canvas')
+  const len = value.length
+  const width = len > 32 ? 1.2 : len > 16 ? 1.6 : 2
+  JsBarcode(canvas, value, {
+    format: 'CODE128',
+    width,
+    height: 56,
+    displayValue: false,
+    margin: 4,
+    background: '#ffffff'
+  })
+  return canvas.toDataURL('image/png')
+}
+
 /** CODE128 PNG for compact cash ADV/REM slips (72mm safe width). */
 export function cashSlipCodeToBarcodeDataUrl(code: string): string {
   const canvas = document.createElement('canvas')

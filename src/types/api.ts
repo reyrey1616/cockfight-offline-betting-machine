@@ -136,6 +136,14 @@ export interface ResetUserPasswordResponse {
   ok: true
 }
 
+/** `GET /users/:id/barcode` — admin only; barcode encodes teller login password. */
+export interface TellerLoginBarcodeResponse {
+  username: string
+  fullName: string
+  initials: string
+  barcodeValue: string
+}
+
 // ===========================================================================
 // Collectors (`POST/GET/PATCH /collectors`)
 // ===========================================================================
@@ -207,7 +215,7 @@ export interface UpdateSettingsResponse {
   setting: Setting
 }
 
-/** `GET /settings/admin-void-barcode` — admin only; barcode encodes `barcodeValue`. */
+/** `GET /settings/admin-void-barcode` — admin only; barcode encodes fixed void secret. */
 export interface AdminVoidBarcodeResponse {
   username: string
   barcodeValue: string

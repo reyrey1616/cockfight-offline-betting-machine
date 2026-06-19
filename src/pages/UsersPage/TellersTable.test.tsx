@@ -15,10 +15,10 @@ describe('TellersTable', () => {
         listMessage={undefined}
         onRefresh={vi.fn()}
         currentUserId="admin-1"
-        patchPending={false}
+        deletePending={false}
         onEdit={vi.fn()}
-        onDeactivateClick={vi.fn()}
-        onReactivate={vi.fn()}
+        onDeleteClick={vi.fn()}
+        onOpenBarcodePrint={vi.fn()}
       />
     )
     expect(screen.getByText(/loading tellers/i)).toBeInTheDocument()
@@ -37,10 +37,10 @@ describe('TellersTable', () => {
         listMessage={undefined}
         onRefresh={vi.fn()}
         currentUserId="admin-1"
-        patchPending={false}
+        deletePending={false}
         onEdit={onEdit}
-        onDeactivateClick={vi.fn()}
-        onReactivate={vi.fn()}
+        onDeleteClick={vi.fn()}
+        onOpenBarcodePrint={vi.fn()}
       />
     )
 

@@ -155,7 +155,7 @@ function EditTellerForm({
             placeholder="Leave blank to keep current password"
           />
           <p className="text-xs text-muted-foreground">
-            If you set a password, share it with them so they can sign in and change it.
+            If you set a password, reprint their Barcode badge so the slip matches.
           </p>
         </div>
 
