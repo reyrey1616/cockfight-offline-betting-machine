@@ -55,6 +55,7 @@ export const BET_STATUS_VALUE = {
   LOST: 'LOST',
   PAID: 'PAID',
   VOIDED: 'VOIDED',
+  PENDING_REFUND: 'PENDING_REFUND',
   REFUNDED: 'REFUNDED'
 } as const
 
@@ -71,6 +72,7 @@ export const BET_STATUS_LABEL: Record<BetStatusValue, string> = {
   LOST: 'Lost',
   PAID: 'Paid out',
   VOIDED: 'Voided',
+  PENDING_REFUND: 'Pending refund',
   REFUNDED: 'Refunded'
 }
 

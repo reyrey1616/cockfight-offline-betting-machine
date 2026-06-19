@@ -15,6 +15,9 @@ export function usePayBet() {
 
       if (data.replay) return
 
+      const isRefund =
+        data.bet.status === 'REFUNDED' || data.bet.status === 'PENDING_REFUND'
+
       const printed = await printPayoutReceipt({
         bet: data.bet,
         fight: data.fight,
@@ -23,8 +26,8 @@ export function usePayBet() {
       if (!printed) {
         toast.error(
           window.electronAPI?.isElectron
-            ? 'Payout recorded but receipt did not print. Check printer name in desktop config.json.'
-            : 'Payout recorded but receipt did not print. Allow pop-ups or use the Electron kiosk app.'
+            ? `${isRefund ? 'Refund' : 'Payout'} recorded but receipt did not print. Check printer name in desktop config.json.`
+            : `${isRefund ? 'Refund' : 'Payout'} recorded but receipt did not print. Allow pop-ups or use the Electron kiosk app.`
         )
       }
     }

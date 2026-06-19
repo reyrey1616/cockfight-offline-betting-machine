@@ -27,7 +27,14 @@ const BET_CODE_NOT_FOUND = 'Cannot find betting code.'
 
 function formatBetPayout(bet: BetListRow): string {
   if (bet.payoutAmount == null || bet.payoutAmount === '') return '—'
-  if (bet.status === 'LOST' || bet.status === 'VOIDED' || bet.status === 'REFUNDED') return '—'
+  if (
+    bet.status === 'LOST' ||
+    bet.status === 'VOIDED' ||
+    bet.status === 'REFUNDED' ||
+    bet.status === 'PAID'
+  ) {
+    return '—'
+  }
   return formatMoney(bet.payoutAmount)
 }
 

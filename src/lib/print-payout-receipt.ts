@@ -21,15 +21,18 @@ function buildSlipFields(input: PayoutReceiptPrintInput) {
     input.bet.payoutAmount != null && input.bet.payoutAmount !== ''
       ? formatMoney(input.bet.payoutAmount)
       : '—'
+  const isRefund =
+    input.bet.status === 'PENDING_REFUND' || input.bet.status === 'REFUNDED'
 
   return {
     fightNumber: String(input.fight.fightNumber),
     bettingSide: BET_SIDE_LABEL[input.bet.side],
     tellerName: input.bet.tellerNameSnapshot ?? '—',
     betAmount: formatMoney(input.bet.amount),
-    odds: formatPayoutReceiptOdds(input.fight, input.bet),
+    odds: isRefund ? '—' : formatPayoutReceiptOdds(input.fight, input.bet),
     payoutAmount: payout,
-    paidAt: formatSlipTimestamp(paidAtIso)
+    paidAt: formatSlipTimestamp(paidAtIso),
+    statusLabel: isRefund ? 'Refunded' : 'Paid'
   }
 }
 

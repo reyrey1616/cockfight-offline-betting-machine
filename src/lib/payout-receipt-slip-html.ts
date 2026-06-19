@@ -9,6 +9,7 @@ export interface PayoutReceiptSlipFields {
   odds: string
   payoutAmount: string
   paidAt: string
+  statusLabel: string
 }
 
 function escapeHtml(s: string): string {
@@ -118,6 +119,7 @@ export function buildPayoutReceiptSlipHtml(fields: PayoutReceiptSlipFields): str
   const odds = escapeHtml(fields.odds)
   const payoutAmount = escapeHtml(fields.payoutAmount)
   const paidAt = escapeHtml(fields.paidAt)
+  const statusLabel = escapeHtml(fields.statusLabel)
 
   return `<!DOCTYPE html>
 <html>
@@ -133,6 +135,7 @@ export function buildPayoutReceiptSlipHtml(fields: PayoutReceiptSlipFields): str
       <p class="line"><span class="label">Fight number:</span> <span class="value">${fightNumber}</span></p>
       <p class="line"><span class="label">Betting side:</span> <span class="value">${bettingSide}</span></p>
       <p class="line"><span class="label">Teller:</span> <span class="value">${tellerName}</span></p>
+      <p class="line"><span class="label">Status:</span> <span class="value">${statusLabel}</span></p>
       <p class="line"><span class="label">Bet:</span> <span class="value">${betAmount}</span></p>
       <p class="line"><span class="label">Odds:</span> <span class="value odds-value">${odds}</span></p>
       <p class="line"><span class="label">Payout:</span> <span class="value emphasis">${payoutAmount}</span></p>

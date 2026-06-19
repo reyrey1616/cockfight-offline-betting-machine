@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { BET_SIDE_LABEL } from '@/constants'
+import { BET_SIDE_LABEL, BET_STATUS_LABEL } from '@/constants'
 import { ApiError } from '@/lib/api'
 import { getBetByCode } from '@/lib/api-bets'
 import { formatBoardOdds, settledOddsForSide } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
-import { disqualificationMessage, isPayableWin } from '@/lib/payout-eligibility'
+import { disqualificationMessage, isPayableAtDesk, isRefundPayout } from '@/lib/payout-eligibility'
 import { checkPayoutCashOnHand } from '@/lib/payout-cash-eligibility'
 import { usePayBet } from '@/hooks/usePayBet'
 import { useCashBalance } from '@/hooks/useCash'
@@ -94,7 +94,7 @@ export function PayoutMachinePage() {
         setDialogMessage('This ticket is not bet on this teller.')
         return
       }
-      if (isPayableWin(bet, fight)) {
+      if (isPayableAtDesk(bet, fight)) {
         const cashCheck = checkPayoutCashOnHand(cashBalanceQuery.data?.balance, bet.payoutAmount)
         if (!cashCheck.ok) {
           setDialogMessage(cashCheck.message ?? 'Payout cannot be done — cash on hand is short.')
@@ -160,7 +160,17 @@ export function PayoutMachinePage() {
     }
     payBetMutation.mutate(payable.bet.id, {
       onSuccess: (res) => {
-        toast.success(res.replay ? 'Already marked as paid.' : 'Payout recorded.', { duration: 2200 })
+        const isRefund = isRefundPayout(payable.bet)
+        toast.success(
+          res.replay
+            ? isRefund
+              ? 'Already marked as refunded.'
+              : 'Already marked as paid.'
+            : isRefund
+              ? 'Refund recorded.'
+              : 'Payout recorded.',
+          { duration: 2200 }
+        )
         successDialogRef.current?.close()
       },
       onError: (e) => {
@@ -170,8 +180,9 @@ export function PayoutMachinePage() {
     })
   }
 
+  const refundPayout = payable != null && isRefundPayout(payable.bet)
   const payoutOdds =
-    payable != null ? settledOddsForSide(payable.fight, payable.bet.side) : null
+    payable != null && !refundPayout ? settledOddsForSide(payable.fight, payable.bet.side) : null
   const payoutOddsDisplay = formatBoardOdds(payoutOdds)
   const payoutAmountDisplay =
     payable?.bet.payoutAmount != null ? formatMoney(payable.bet.payoutAmount) : '—'
@@ -262,7 +273,9 @@ export function PayoutMachinePage() {
         {payable ? (
           <div className="space-y-5">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pay customer</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {refundPayout ? 'Refund customer' : 'Pay customer'}
+              </p>
               <p
                 className="mt-2 text-5xl font-black tabular-nums leading-none tracking-tight text-green-700 dark:text-green-400 sm:text-6xl"
                 aria-live="polite"
@@ -270,14 +283,22 @@ export function PayoutMachinePage() {
                 {payoutAmountDisplay}
               </p>
               <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                Total payout
+                {refundPayout ? 'Refund amount' : 'Total payout'}
               </p>
-              <p className="mt-4 text-2xl font-bold tabular-nums tracking-tight text-foreground">
-                {payoutOddsDisplay}
-              </p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                Payout odds
-              </p>
+              {refundPayout ? (
+                <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  Status: {BET_STATUS_LABEL[payable.bet.status] ?? payable.bet.status}
+                </p>
+              ) : (
+                <>
+                  <p className="mt-4 text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                    {payoutOddsDisplay}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Payout odds
+                  </p>
+                </>
+              )}
             </div>
 
             <div className="space-y-2 rounded-md border bg-muted/30 p-3">
@@ -301,7 +322,7 @@ export function PayoutMachinePage() {
                 disabled={payPending || !canConfirmPayout}
                 onClick={() => void handleConfirmPaid()}
               >
-                {payPending ? 'Recording…' : 'Paid'}
+                {payPending ? 'Recording…' : refundPayout ? 'Refund' : 'Paid'}
               </Button>
             </div>
           </div>

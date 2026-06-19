@@ -404,6 +404,7 @@ export type BetStatusWire =
   | 'LOST'
   | 'PAID'
   | 'VOIDED'
+  | 'PENDING_REFUND'
   | 'REFUNDED'
 
 export type BetSideWire = 'MERON' | 'WALA'

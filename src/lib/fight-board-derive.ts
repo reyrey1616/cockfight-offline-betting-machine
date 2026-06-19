@@ -279,7 +279,7 @@ export function buildFightBoardTicker(
     case 'SETTLED':
       return `FIGHT #${n} — RESULT: ${fight.outcome ?? 'SETTLED'}.`
     case 'CANCELLED':
-      return `FIGHT #${n} — CANCELLED. BETS REFUNDED.`
+      return `FIGHT #${n} — CANCELLED. REFUND AT PAYOUT DESK.`
     default:
       return `FIGHT #${n} — ${fight.status}.`
   }

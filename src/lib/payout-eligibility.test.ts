@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { disqualificationMessage, isPayableWin } from '@/lib/payout-eligibility'
+import { disqualificationMessage, isPayableRefund, isPayableWin } from '@/lib/payout-eligibility'
 import { makeBetRow, makeFight } from '@/test/fixtures'
 import type { PlaceBetFightSummary } from '@/types/api'
 
@@ -37,6 +37,26 @@ describe('isPayableWin', () => {
     expect(
       isPayableWin(makeBetRow({ status: 'PENDING' }), makeFightSummary({ status: 'SETTLED' }))
     ).toBe(false)
+  })
+})
+
+describe('isPayableRefund', () => {
+  it('allows PENDING_REFUND on cancelled fight', () => {
+    expect(
+      isPayableRefund(
+        makeBetRow({ status: 'PENDING_REFUND', payoutAmount: '100.00' }),
+        makeFightSummary({ status: 'CANCELLED' })
+      )
+    ).toBe(true)
+  })
+
+  it('allows PENDING_REFUND on draw fight', () => {
+    expect(
+      isPayableRefund(
+        makeBetRow({ status: 'PENDING_REFUND', payoutAmount: '100.00' }),
+        makeFightSummary({ status: 'SETTLED', outcome: 'DRAW' })
+      )
+    ).toBe(true)
   })
 })
 

@@ -45,6 +45,34 @@ describe('printPayoutReceipt', () => {
     expect(printPayoutReceipt.mock.calls[0][0].html).toContain('950.00')
   })
 
+  it('prints refund status on draw/cancel refund receipts', async () => {
+    const printPayoutReceipt = vi.fn().mockResolvedValue({ ok: true })
+    window.electronAPI = {
+      isElectron: true,
+      printBetTicket: vi.fn(),
+      printCollectorBadge: vi.fn(),
+      printCashSlip: vi.fn(),
+      printPayoutReceipt,
+      getDesktopConfig: vi.fn()
+    }
+
+    const { printPayoutReceipt: printFn } = await import('@/lib/print-payout-receipt')
+    const ok = await printFn({
+      bet: makeBetRow({
+        status: 'PENDING_REFUND',
+        amount: '500.00',
+        payoutAmount: '500.00'
+      }),
+      fight: makeFight({ fightNumber: 12, outcome: 'DRAW', status: 'SETTLED' })
+    })
+
+    expect(ok).toBe(true)
+    const html = printPayoutReceipt.mock.calls[0][0].html as string
+    expect(html).toContain('Status:')
+    expect(html).toContain('Refunded')
+    expect(html).toContain('500.00')
+  })
+
   it('opens a print window in the browser', async () => {
     const print = vi.fn()
     const close = vi.fn()

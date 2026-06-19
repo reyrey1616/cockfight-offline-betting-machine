@@ -30,13 +30,17 @@ export function WinningTicketsTable({
   const scopeKey = tellerId ?? 'ALL'
 
   const q = useQuery({
-    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'bets', 'winning', scopeKey],
-    queryFn: () =>
-      listBets({
-        tellerId,
-        status: 'WON',
-        limit: 100
-      }),
+    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'bets', 'unpaid-payouts', scopeKey],
+    queryFn: async () => {
+      const [won, pendingRefunds] = await Promise.all([
+        listBets({ tellerId, status: 'WON', limit: 100 }),
+        listBets({ tellerId, status: 'PENDING_REFUND', limit: 100 })
+      ])
+      const bets = [...won.bets, ...pendingRefunds.bets].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      return { bets, nextCursor: null }
+    },
     staleTime: 5_000
   })
 
@@ -52,7 +56,7 @@ export function WinningTicketsTable({
   return (
     <Card className={dash.card(panelClassName)}>
       <CardHeader className={dash.header}>
-        <CardTitle className={dash.title}>Winning tickets (unpaid)</CardTitle>
+        <CardTitle className={dash.title}>Unpaid payouts</CardTitle>
         <span className={dash.liveBadge}>Live</span>
       </CardHeader>
       <CardContent className="flex flex-col p-0">
@@ -94,7 +98,7 @@ export function WinningTicketsTable({
               ) : bets.length === 0 ? (
                 <tr>
                   <td colSpan={columnCount} className={dash.empty}>
-                    No unpaid winners.
+                    No unpaid winners or pending refunds.
                   </td>
                 </tr>
               ) : (

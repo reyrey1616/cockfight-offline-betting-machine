@@ -27,6 +27,7 @@ const BET_STATUS_MESSAGES: Record<string, string> = {
   LOST: 'Losing tickets cannot be cancelled.',
   PAID: 'Paid-out tickets cannot be cancelled.',
   REFUNDED: 'Refunded tickets cannot be cancelled.',
+  PENDING_REFUND: 'Pending refund tickets cannot be cancelled.',
   VOIDED: 'This ticket is already voided.'
 }
 
