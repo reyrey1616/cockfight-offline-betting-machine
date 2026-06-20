@@ -52,7 +52,7 @@ export function disqualificationMessage(
   if (fight.status === 'SETTLED' && bet.status === 'PENDING') {
     return 'This ticket is still pending — contact an admin (settlement data may be out of sync).'
   }
-  if (fight.status !== 'SETTLED' && fight.status !== 'CANCELLED') {
+  if (fight.status !== 'SETTLED') {
     return 'This fight has not been settled yet.'
   }
   if (bet.status === 'VOIDED') {
