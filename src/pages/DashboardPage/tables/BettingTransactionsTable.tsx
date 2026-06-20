@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useRef, useState, type KeyboardEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -26,15 +26,8 @@ const RECENT_BET_LIMIT = 100
 const BET_CODE_NOT_FOUND = 'Cannot find betting code.'
 
 function formatBetPayout(bet: BetListRow): string {
+  if (bet.status === 'LOST') return '—'
   if (bet.payoutAmount == null || bet.payoutAmount === '') return '—'
-  if (
-    bet.status === 'LOST' ||
-    bet.status === 'VOIDED' ||
-    bet.status === 'REFUNDED' ||
-    bet.status === 'PAID'
-  ) {
-    return '—'
-  }
   return formatMoney(bet.payoutAmount)
 }
 
@@ -82,7 +75,12 @@ export interface BettingTransactionsTableProps {
   searchEnabled?: boolean
 }
 
-export function BettingTransactionsTable({
+export function BettingTransactionsTable(props: BettingTransactionsTableProps) {
+  const scopeKey = props.tellerId ?? 'ALL'
+  return <BettingTransactionsTableBody key={scopeKey} {...props} />
+}
+
+function BettingTransactionsTableBody({
   tellerId,
   resolveTellerName,
   panelClassName,
@@ -120,10 +118,6 @@ export function BettingTransactionsTable({
     setSearchValue('')
     lookupInFlightRef.current = null
   }, [])
-
-  useEffect(() => {
-    clearLookup()
-  }, [scopeKey, clearLookup])
 
   const runLookup = useCallback(
     async (rawCode: string) => {
@@ -254,7 +248,7 @@ export function BettingTransactionsTable({
           </div>
         ) : null}
         <div className={dash.bodyScroll}>
-          <table className={cn(dash.table, 'min-w-[52rem] table-fixed')}>
+          <table className={cn(dash.table, 'min-w-208 table-fixed')}>
             <colgroup>
               <col style={{ width: '14%' }} />
               <col style={{ width: '10%' }} />
