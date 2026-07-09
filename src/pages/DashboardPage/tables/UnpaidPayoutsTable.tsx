@@ -15,7 +15,6 @@ import {
   filterUnpaidPayoutsForDashboard,
   filterUnpaidPayoutsForMyTeller,
 } from '@/lib/unpaid-payout-dashboard'
-import { UNPAID_PAYOUT_DASHBOARD_MINUTES } from '@/constants'
 import { useAuthUser } from '@/store/auth'
 import type { BetListRow } from '@/types/api'
 import { cn } from '@/lib/utils'
@@ -85,7 +84,6 @@ export function UnpaidPayoutsTable({
   )
 
   const columnCount = isArchive ? 8 : 7
-  const minutes = UNPAID_PAYOUT_DASHBOARD_MINUTES
 
   async function handleReprint(bet: BetListRow) {
     if (reprintingBetId != null) return
@@ -117,11 +115,6 @@ export function UnpaidPayoutsTable({
           <CardTitle className={dash.title}>
             {isArchive ? 'Older unpaid tickets' : 'Unpaid payouts'}
           </CardTitle>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            {isArchive
-              ? `Shown ${minutes}+ minutes after fight result (hidden from admin dashboard)`
-              : `Shown for ${minutes} minutes after fight result`}
-          </p>
         </div>
         <span className={dash.liveBadge}>Live</span>
       </CardHeader>
