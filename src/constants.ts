@@ -175,6 +175,20 @@ export const LEDGER_ENTRY_TYPE_LABEL: Record<LedgerEntryTypeValue, string> = {
 }
 
 // ---------------------------------------------------------------------------
+// Unpaid payout dashboard window
+//
+// After a fight is settled/cancelled, unpaid WON / PENDING_REFUND tickets show on
+// the admin dashboard for this many minutes, then move to /my-teller only.
+// Change UNPAID_PAYOUT_DASHBOARD_MINUTES here — both views stay in sync.
+// ---------------------------------------------------------------------------
+
+/** How long unpaid tickets stay on the admin dashboard after fight result. */
+export const UNPAID_PAYOUT_DASHBOARD_MINUTES = 15
+
+export const UNPAID_PAYOUT_DASHBOARD_TTL_MS =
+  UNPAID_PAYOUT_DASHBOARD_MINUTES * 60 * 1000
+
+// ---------------------------------------------------------------------------
 // Session reset (magic string body) — single source for UI + future forms
 // ---------------------------------------------------------------------------
 

@@ -19,6 +19,7 @@ export function isPathAllowedForRole(from: string, role: UserRole): boolean {
     if (path === '/kiosk' || path.startsWith('/kiosk/')) return true
     if (path === '/display' || path.startsWith('/display/')) return true
     if (path === '/payout-machine' || path.startsWith('/payout-machine/')) return true
+    if (path === '/my-teller' || path.startsWith('/my-teller/')) return true
     if (path === '/home' || path.startsWith('/home/')) return true
     return false
   }

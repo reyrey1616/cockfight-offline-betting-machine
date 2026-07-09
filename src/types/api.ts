@@ -442,6 +442,8 @@ export interface BetListRow extends BetRow {
   walaOdds: number | null
   payoutRatioMeron: string | null
   payoutRatioWala: string | null
+  /** Settled or cancelled timestamp — dashboard ages off unpaid rows after configured window. */
+  fightEndedAt: string | null
 }
 
 export interface ListBetsQuery {

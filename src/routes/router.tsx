@@ -8,6 +8,7 @@
 //         └► AppLayout
 //              /home
 //              /payout-machine            (teller + admin — scan winning tickets)
+//              /my-teller                 (teller — older unpaid tickets)
 //              /live-board                (legacy URL → /kiosk)
 //              /dashboard                 (admin dashboard)
 //              /operate-fights            (admin Operate fights)
@@ -25,6 +26,7 @@ import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PayoutMachinePage } from '@/pages/PayoutMachinePage'
+import { MyTellerPage } from '@/pages/MyTellerPage'
 import { RealTimeOddsPage } from '@/pages/RealTimeOddsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { TellerLiveBoardPage } from '@/pages/TellerLiveBoardPage'
@@ -69,6 +71,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireRole allow={['TELLER', 'ADMIN']}>
                 <PayoutMachinePage />
+              </RequireRole>
+            )
+          },
+          {
+            path: 'my-teller',
+            element: (
+              <RequireRole allow={['TELLER']}>
+                <MyTellerPage />
               </RequireRole>
             )
           },

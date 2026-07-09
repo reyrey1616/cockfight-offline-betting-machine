@@ -20,7 +20,9 @@ describe('post-login-redirect', () => {
 
   it('allows teller desk routes from saved redirect', () => {
     expect(isPathAllowedForRole('/payout-machine', 'TELLER')).toBe(true)
+    expect(isPathAllowedForRole('/my-teller', 'TELLER')).toBe(true)
     expect(resolvePostLoginPath('TELLER', '/payout-machine')).toBe('/payout-machine')
+    expect(resolvePostLoginPath('TELLER', '/my-teller')).toBe('/my-teller')
   })
 
   it('blocks admin from teller-only kiosk', () => {

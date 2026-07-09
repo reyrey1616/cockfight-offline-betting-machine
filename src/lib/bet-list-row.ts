@@ -9,7 +9,8 @@ export function toBetListRow(bet: BetRow, fight: PlaceBetFightSummary): BetListR
     meronOdds: fight.meronOdds,
     walaOdds: fight.walaOdds,
     payoutRatioMeron: fight.payoutRatioMeron,
-    payoutRatioWala: fight.payoutRatioWala
+    payoutRatioWala: fight.payoutRatioWala,
+    fightEndedAt: null
   }
 }
 

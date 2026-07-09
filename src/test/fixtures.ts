@@ -172,6 +172,7 @@ export function makeBetListRow(overrides: Partial<BetListRow> = {}): BetListRow 
     walaOdds: null,
     payoutRatioMeron: null,
     payoutRatioWala: null,
+    fightEndedAt: null,
     ...overrides
   }
 }
