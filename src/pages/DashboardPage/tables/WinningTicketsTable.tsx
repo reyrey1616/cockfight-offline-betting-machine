@@ -1,2 +1,2 @@
-export { UnpaidPayoutsTable, WinningTicketsTable } from './UnpaidPayoutsTable'
-export type { UnpaidPayoutsAgeFilter, UnpaidPayoutsTableProps } from './UnpaidPayoutsTable'
+export { MyTellerTable, WinningTicketsTable } from './MyTeller'
+export type { UnpaidPayoutsAgeFilter, MyTellerTableProps } from './MyTeller'

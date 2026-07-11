@@ -32,6 +32,22 @@ export interface FightBoardLayoutProps {
   tickerMessage: string
   /** embedded = rounded card; fullscreen = edge-to-edge TV */
   variant?: 'embedded' | 'fullscreen'
+  /** Smaller pool typography when the board shares space (e.g. `/kiosk` betting panel). */
+  density?: 'default' | 'kiosk'
+}
+
+function poolAmountClass(pool: string, density: 'default' | 'kiosk'): string {
+  const long = pool.length >= 6
+  if (density === 'kiosk') {
+    return cn(
+      'font-black tabular-nums tracking-tight',
+      long ? 'text-2xl lg:text-3xl xl:text-4xl' : 'text-3xl lg:text-4xl xl:text-5xl'
+    )
+  }
+  return cn(
+    'text-6xl font-black tabular-nums tracking-tight lg:text-7xl xl:text-8xl',
+    long && 'text-5xl! lg:text-6xl! xl:text-7xl!'
+  )
 }
 
 function statusPillClass(status: FightStatusValue | null): string {
@@ -203,9 +219,11 @@ export function FightBoardLayout({
   sessionStats,
   history,
   tickerMessage,
-  variant = 'embedded'
+  variant = 'embedded',
+  density = 'default'
 }: FightBoardLayoutProps) {
   const full = variant === 'fullscreen'
+  const compact = density === 'kiosk'
   const tickerSkin = tickerBarClasses(fightStatus)
   const bettingOpen = fightStatus === 'OPEN' || fightStatus === 'LAST_CALL'
   const fightSettled = fightStatus === 'SETTLED'
@@ -247,18 +265,14 @@ export function FightBoardLayout({
             <div className="border-b border-zinc-300 px-3 py-3 text-center text-sm font-black uppercase tracking-wide text-zinc-700 lg:text-base">
               Total bets
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-2 py-8">
-              <p
-                className={cn(
-                  'text-6xl font-black tabular-nums tracking-tight lg:text-7xl xl:text-8xl',
-                  meronPool.length >= 6 && 'text-5xl! lg:text-6xl! xl:text-7xl!'
-                )}
-              >
+            <div className={cn('flex flex-1 flex-col items-center justify-center px-2', compact ? 'py-4' : 'py-8')}>
+              <p className={poolAmountClass(meronPool, density)}>
                 {formatMoney(meronPool)}
               </p>
               <div
                 className={cn(
-                  'mt-8 w-full max-w-[340px] bg-white px-5 py-8 text-center shadow-inner lg:max-w-[380px]',
+                  'w-full max-w-[340px] bg-white px-5 py-8 text-center shadow-inner lg:max-w-[380px]',
+                  compact ? 'mt-4 py-5' : 'mt-8',
                   bettingOpen && meronSideHeld && 'ring-4 ring-amber-500 ring-inset'
                 )}
               >
@@ -412,18 +426,14 @@ export function FightBoardLayout({
             <div className="border-b border-zinc-300 px-3 py-3 text-center text-sm font-black uppercase tracking-wide text-zinc-700 lg:text-base">
               Total bets
             </div>
-            <div className="flex flex-1 flex-col items-center justify-center px-2 py-8">
-              <p
-                className={cn(
-                  'text-6xl font-black tabular-nums tracking-tight lg:text-7xl xl:text-8xl',
-                  walaPool.length >= 6 && 'text-5xl! lg:text-6xl! xl:text-7xl!'
-                )}
-              >
+            <div className={cn('flex flex-1 flex-col items-center justify-center px-2', compact ? 'py-4' : 'py-8')}>
+              <p className={poolAmountClass(walaPool, density)}>
                 {formatMoney(walaPool)}
               </p>
               <div
                 className={cn(
-                  'mt-8 w-full max-w-[340px] bg-white px-5 py-8 text-center shadow-inner lg:max-w-[380px]',
+                  'w-full max-w-[340px] bg-white px-5 py-8 text-center shadow-inner lg:max-w-[380px]',
+                  compact ? 'mt-4 py-5' : 'mt-8',
                   bettingOpen && walaSideHeld && 'ring-4 ring-amber-500 ring-inset'
                 )}
               >

@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { Fight } from '@/types/api'
 
+export type FightResultFlashOutcome = 'MERON' | 'WALA' | 'DRAW' | 'CANCELLED'
+
 export type FightWinnerFlash = {
-  winner: 'MERON' | 'WALA'
+  outcome: FightResultFlashOutcome
   fightNumber: number
 }
 
@@ -16,10 +18,23 @@ export interface UseFightWinnerFlashOptions {
   enabled?: boolean
 }
 
+function flashOutcomeForSnapshot(snapshot: Snapshot): FightResultFlashOutcome | null {
+  if (snapshot.status === 'CANCELLED') return 'CANCELLED'
+  if (snapshot.status !== 'SETTLED') return null
+  if (
+    snapshot.outcome === 'MERON' ||
+    snapshot.outcome === 'WALA' ||
+    snapshot.outcome === 'DRAW'
+  ) {
+    return snapshot.outcome
+  }
+  return null
+}
+
 /**
- * When the current fight becomes SETTLED with MERON or WALA (including
- * admin correction), exposes a one-shot flash for a full-screen overlay.
- * Skips the first paint (no flash on hydrate of an already-settled fight).
+ * When the current fight is declared (MERON/WALA/DRAW settle or cancel),
+ * exposes a one-shot flash for a full-screen overlay.
+ * Skips the first paint (no flash on hydrate of an already-finished fight).
  */
 export function useFightWinnerFlash(
   fight: Fight | null,
@@ -60,18 +75,18 @@ export function useFightWinnerFlash(
       status: fight.status,
       outcome: fight.outcome ?? null
     }
+    const outcome = flashOutcomeForSnapshot(next)
 
-    if (fight.status !== 'SETTLED') {
+    if (!outcome) {
       if (prev && prev.id !== fight.id) {
         dismissDeferred()
       } else if (
         prev &&
         prev.id === fight.id &&
-        prev.status === 'SETTLED' &&
+        flashOutcomeForSnapshot(prev) &&
         (fight.status === 'OPEN' ||
           fight.status === 'LAST_CALL' ||
-          fight.status === 'SCHEDULED' ||
-          fight.status === 'CANCELLED')
+          fight.status === 'SCHEDULED')
       ) {
         dismissDeferred()
       }
@@ -80,26 +95,24 @@ export function useFightWinnerFlash(
     }
 
     snapshotRef.current = next
-
-    const o = fight.outcome
-    if (o !== 'MERON' && o !== 'WALA') return
     if (!prev) return
 
     const sameFight = prev.id === fight.id
-    const becameSettled = sameFight && prev.status !== 'SETTLED'
-    const correction =
-      sameFight &&
-      prev.status === 'SETTLED' &&
-      prev.outcome !== (fight.outcome ?? null) &&
-      (o === 'MERON' || o === 'WALA')
+    if (!sameFight) return
 
-    if (!becameSettled && !correction) return
+    const prevOutcome = flashOutcomeForSnapshot(prev)
+    const becameDeclared =
+      prev.status !== fight.status ||
+      prev.outcome !== next.outcome ||
+      prevOutcome !== outcome
 
-    const dedupeKey = `${fight.id}:${o}:${fight.settledAt ?? fight.updatedAt}`
+    if (!becameDeclared) return
+
+    const dedupeKey = `${fight.id}:${outcome}:${fight.settledAt ?? fight.cancelledAt ?? fight.updatedAt}`
     if (flashKeyRef.current === dedupeKey) return
     flashKeyRef.current = dedupeKey
 
-    setFlash({ winner: o, fightNumber: fight.fightNumber })
+    setFlash({ outcome, fightNumber: fight.fightNumber })
   }, [fight, dismissDeferred, enabled])
 
   // Timer lives in its own effect: `fight` updates on every WS tick would

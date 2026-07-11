@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { BET_SIDE_LABEL } from '@/constants'
 import { dash, fmtWhenShort } from '@/pages/DashboardPage/dashboard-dense'
 import { reprintBetTicket } from '@/lib/print-bet-ticket'
@@ -26,19 +26,19 @@ function formatBetPayout(bet: BetListRow): string {
   return formatMoney(bet.payoutAmount)
 }
 
-export interface UnpaidPayoutsTableProps {
+export interface MyTellerTableProps {
   ageFilter?: UnpaidPayoutsAgeFilter
   tellerId?: string
   resolveTellerName: (id: string) => string
   panelClassName?: string
 }
 
-export function UnpaidPayoutsTable({
+export function MyTellerTable({
   ageFilter = 'dashboard-recent',
   tellerId,
   resolveTellerName,
   panelClassName
-}: UnpaidPayoutsTableProps) {
+}: MyTellerTableProps) {
   const actor = useAuthUser()
   const isArchive = ageFilter === 'my-teller-archived'
   const scopeKey = tellerId ?? (isArchive ? 'SELF' : 'ALL')
@@ -112,9 +112,6 @@ export function UnpaidPayoutsTable({
     <Card className={dash.card(panelClassName)}>
       <CardHeader className={dash.header}>
         <div className="min-w-0 flex-1">
-          <CardTitle className={dash.title}>
-            {isArchive ? 'Older unpaid tickets' : 'Unpaid payouts'}
-          </CardTitle>
         </div>
         <span className={dash.liveBadge}>Live</span>
       </CardHeader>
@@ -215,9 +212,9 @@ export function UnpaidPayoutsTable({
   )
 }
 
-/** @deprecated Use `UnpaidPayoutsTable` with default `ageFilter`. */
+/** @deprecated Use `MyTellerTable` with default `ageFilter`. */
 export function WinningTicketsTable(
-  props: Omit<UnpaidPayoutsTableProps, 'ageFilter'>
+  props: Omit<MyTellerTableProps, 'ageFilter'>
 ) {
-  return <UnpaidPayoutsTable {...props} ageFilter="dashboard-recent" />
+  return <MyTellerTable {...props} ageFilter="dashboard-recent" />
 }

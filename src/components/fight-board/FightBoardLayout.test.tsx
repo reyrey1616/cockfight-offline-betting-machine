@@ -33,8 +33,14 @@ describe('FightBoardLayout', () => {
     expect(screen.getAllByText(/Meron held/i).length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows empty history message', () => {
-    render(<FightBoardLayout {...baseProps} history={[]} />)
-    expect(screen.getByText(/No finished fights/i)).toBeInTheDocument()
+  it('uses smaller pool typography in kiosk density', () => {
+    const { container, rerender } = render(<FightBoardLayout {...baseProps} />)
+    const defaultPool = container.querySelector('.font-black.tabular-nums.tracking-tight')
+    expect(defaultPool?.className).toContain('text-6xl')
+
+    rerender(<FightBoardLayout {...baseProps} density="kiosk" />)
+    const kioskPool = container.querySelector('.font-black.tabular-nums.tracking-tight')
+    expect(kioskPool?.className).toContain('text-3xl')
+    expect(kioskPool?.className).not.toContain('text-6xl')
   })
 })

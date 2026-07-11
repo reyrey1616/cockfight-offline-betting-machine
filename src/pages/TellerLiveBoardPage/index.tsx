@@ -56,6 +56,7 @@ export function TellerLiveBoardPage() {
               history={vm.history}
               tickerMessage={vm.tickerMessage}
               variant="embedded"
+              density="kiosk"
             />
           </div>
           <div className="flex w-full shrink-0 flex-col gap-3 xl:w-[min(100%,28rem)] xl:max-w-[28rem]">

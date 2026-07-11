@@ -13,6 +13,7 @@ import { formatMoney } from '@/lib/format-money'
 import { disqualificationMessage, isPayableAtDesk, isRefundPayout } from '@/lib/payout-eligibility'
 import { checkPayoutCashOnHand } from '@/lib/payout-cash-eligibility'
 import { usePayBet } from '@/hooks/usePayBet'
+import { useDraggablePanel } from '@/hooks/useDraggablePanel'
 import { useCashBalance } from '@/hooks/useCash'
 import { useAuthUser } from '@/store/auth'
 import type { BetRow, PlaceBetFightSummary } from '@/types/api'
@@ -192,6 +193,11 @@ export function PayoutMachinePage() {
       : null
   const canConfirmPayout = payoutCashCheck?.ok ?? false
 
+  const { dragHandleProps, panelStyle, resetPosition } = useDraggablePanel({
+    enabled: payable != null,
+    scale: 0.95
+  })
+
   return (
     <div className="space-y-4 p-4 pb-10">
       <div className="border-b pb-4">
@@ -264,53 +270,60 @@ export function PayoutMachinePage() {
       {/* Winning ticket — confirm payout */}
       <dialog
         ref={successDialogRef}
-        className="fixed left-1/2 top-1/2 z-50 w-[min(100%,26rem)] max-h-[min(90dvh,32rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border bg-background p-5 text-sm shadow-lg backdrop:bg-black/50"
+        className="fixed left-1/2 top-1/2 z-50 w-[min(100%,21rem)] max-h-[min(90dvh,26rem)] overflow-y-auto rounded-lg border bg-background p-4 text-sm shadow-lg backdrop:bg-black/50"
+        style={panelStyle}
         onClose={() => {
+          resetPosition()
           setPayable(null)
           focusScanner()
         }}
       >
         {payable ? (
-          <div className="space-y-5">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {refundPayout ? 'Refund customer' : 'Pay customer'}
-              </p>
-              <p
-                className="mt-2 text-5xl font-black tabular-nums leading-none tracking-tight text-green-700 dark:text-green-400 sm:text-6xl"
-                aria-live="polite"
-              >
-                {payoutAmountDisplay}
-              </p>
-              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                {refundPayout ? 'Refund amount' : 'Total payout'}
-              </p>
-              {refundPayout ? (
-                <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-                  Status: {BET_STATUS_LABEL[payable.bet.status] ?? payable.bet.status}
+          <div className="space-y-4">
+            <div {...dragHandleProps}>
+              <div className="flex justify-center pb-1 pt-0.5" aria-hidden>
+                {/* <div className="h-1 w-10 rounded-full bg-muted-foreground/35" /> */}
+              </div>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {refundPayout ? 'Refund customer' : 'Pay customer'}
                 </p>
-              ) : (
-                <>
-                  <p className="mt-4 text-2xl font-bold tabular-nums tracking-tight text-foreground">
-                    {payoutOddsDisplay}
+                <p
+                  className="mt-2 text-3xl font-bold tabular-nums leading-tight tracking-tight text-green-800 dark:text-green-400"
+                  aria-live="polite"
+                >
+                  {payoutAmountDisplay}
+                </p>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {refundPayout ? 'Refund amount' : 'Total payout'}
+                </p>
+                {refundPayout ? (
+                  <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                    Status: {BET_STATUS_LABEL[payable.bet.status] ?? payable.bet.status}
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                    Payout odds
-                  </p>
-                </>
-              )}
+                ) : (
+                  <>
+                    <p className="mt-4 text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                      {payoutOddsDisplay}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                      Payout odds
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className="mt-4 space-y-2 rounded-md border bg-muted/30 p-2.5">
+                <DetailLine label="Teller">{payable.bet.tellerNameSnapshot ?? '—'}</DetailLine>
+                <DetailLine label="Fight / event">{fightDetailsLine(payable.fight, payable.bet)}</DetailLine>
+                <DetailLine label="Bet amount">{formatMoney(payable.bet.amount)}</DetailLine>
+                <DetailLine label="Reference code">
+                  <span className="font-mono text-xs">{payable.bet.code}</span>
+                </DetailLine>
+              </div>
             </div>
 
-            <div className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <DetailLine label="Teller">{payable.bet.tellerNameSnapshot ?? '—'}</DetailLine>
-              <DetailLine label="Fight / event">{fightDetailsLine(payable.fight, payable.bet)}</DetailLine>
-              <DetailLine label="Bet amount">{formatMoney(payable.bet.amount)}</DetailLine>
-              <DetailLine label="Reference code">
-                <span className="font-mono text-xs">{payable.bet.code}</span>
-              </DetailLine>
-            </div>
-
-            <div className="flex justify-end border-t pt-4">
+            <div className="flex justify-end border-t pt-3">
               {!canConfirmPayout && payoutCashCheck?.message ? (
                 <p className="mr-auto max-w-[14rem] text-left text-xs text-destructive">
                   {payoutCashCheck.message}
