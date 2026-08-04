@@ -364,6 +364,21 @@ export interface FightActionResponse {
   replay?: boolean
 }
 
+/** `POST /fights/:id/unsettle` — revert SETTLED → CLOSED (closes any live fight first). */
+export interface UnsettleFightResponse {
+  fight: Fight
+  summary: {
+    betsReset: number
+    voidedSkipped: number
+    resettableCount: number
+    closedFights: Array<{
+      id: string
+      fightNumber: number
+      betCount: number
+    }>
+  }
+}
+
 export interface SettleFightRequest {
   outcome: SettleFightOutcome
 }
@@ -442,14 +457,18 @@ export interface BetListRow extends BetRow {
   walaOdds: number | null
   payoutRatioMeron: string | null
   payoutRatioWala: string | null
-  /** Settled or cancelled timestamp — dashboard ages off unpaid rows after configured window. */
+  /** Settled or cancelled timestamp for the fight. */
   fightEndedAt: string | null
+  /** Fight snapshotted commission rate (fraction), when included by the API. */
+  commissionRate?: string | null
 }
 
 export interface ListBetsQuery {
   fightId?: string
   tellerId?: string
   status?: BetStatusWire
+  /** Comma-separated statuses; takes precedence over `status` when set. */
+  statuses?: string
   side?: BetSideWire
   since?: string
   limit?: number
@@ -511,6 +530,44 @@ export interface VoidBetResponse {
   fight: PlaceBetFightSummary
   replay: boolean
   actorBalance: string
+}
+
+/** `DELETE /bets/:id/purge` — admin hard-delete for commission/cash adjustment. */
+export interface PurgeBetResponse {
+  purged: {
+    betId: string
+    code: string
+    tellerId: string
+    tellerNameSnapshot: string | null
+    amount: string
+    side: BetSideWire
+    status: 'PAID'
+    fightId: string
+    fightNumber: number
+    commissionRate: string
+  }
+  poolsUnchanged: true
+  fightCommissionUnchanged: true
+  deletedLedgerCount: number
+  ledgerTypesRemoved: string[]
+  adjustmentsWritten: Array<{ tellerId: string; amount: string }>
+  impact: {
+    stakeRemoved: string
+    reportCommissionDrop: string
+    dashboardCommissionDrop: string
+    cashByTeller: Array<{
+      tellerId: string
+      ledgerSumRemoved: string
+      cashOnHandDelta: string
+      adjustmentAmount: string
+    }>
+    balances: Array<{
+      tellerId: string
+      balanceBefore: string
+      balanceAfter: string
+      cashOnHandDelta: string
+    }>
+  }
 }
 
 // ===========================================================================

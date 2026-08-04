@@ -174,9 +174,4 @@ export const LEDGER_ENTRY_TYPE_LABEL: Record<LedgerEntryTypeValue, string> = {
   ADJUSTMENT: 'Adjustment'
 }
 
-export const UNPAID_PAYOUT_DASHBOARD_MINUTES = 15
-
-export const UNPAID_PAYOUT_DASHBOARD_TTL_MS =
-  UNPAID_PAYOUT_DASHBOARD_MINUTES * 60 * 1000
-
 export const SESSION_RESET_CONFIRM_TEXT = 'WIPE-SESSION' as const

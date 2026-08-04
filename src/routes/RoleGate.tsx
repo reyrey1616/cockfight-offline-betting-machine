@@ -1,6 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
 
-import { roleDefaultPath } from '@/lib/post-login-redirect'
+import {
+  defaultPathForUser,
+  isSuperAdminUser,
+  roleDefaultPath
+} from '@/lib/post-login-redirect'
 import { useAuthUser } from '@/store/auth'
 import type { UserRole } from '@/types/api'
 
@@ -13,8 +17,14 @@ export function RoleGate({ allow }: RoleGateProps) {
   if (!user) {
     return null
   }
-  if (!allow.includes(user.role)) {
-    return <Navigate to={roleDefaultPath(user.role)} replace />
+  // Super admin is ADMIN in JWT but must not enter full admin sections.
+  if (isSuperAdminUser(user) || !allow.includes(user.role)) {
+    return (
+      <Navigate
+        to={isSuperAdminUser(user) ? defaultPathForUser(user) : roleDefaultPath(user.role)}
+        replace
+      />
+    )
   }
   return <Outlet />
 }

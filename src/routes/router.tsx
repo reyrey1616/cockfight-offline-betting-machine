@@ -8,7 +8,9 @@
 //         └► AppLayout
 //              /home
 //              /payout-machine            (teller + admin — scan winning tickets)
-//              /my-teller                 (teller — older unpaid tickets)
+//              /my-teller                 (super_admin — unpaid tickets; no nav)
+//              /bets                      (super_admin — bet purge; no nav)
+//              /config                    (super_admin — fight unsettle; default landing; no nav)
 //              /live-board                (legacy URL → /kiosk)
 //              /dashboard                 (admin dashboard)
 //              /operate-fights            (admin Operate fights)
@@ -27,6 +29,8 @@ import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PayoutMachinePage } from '@/pages/PayoutMachinePage'
 import { MyTellerPage } from '@/pages/MyTellerPage'
+import { BetsPage } from '@/pages/BetsPage'
+import { ConfigPage } from '@/pages/ConfigPage'
 import { RealTimeOddsPage } from '@/pages/RealTimeOddsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { TellerLiveBoardPage } from '@/pages/TellerLiveBoardPage'
@@ -36,6 +40,7 @@ import { AuthedIndexRedirect } from '@/routes/AuthedIndexRedirect'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { RequireRole } from '@/routes/RequireRole'
 import { RoleGate } from '@/routes/RoleGate'
+import { SUPER_ADMIN_USERNAME } from '@/lib/post-login-redirect'
 
 export const router = createBrowserRouter([
   {
@@ -77,8 +82,24 @@ export const router = createBrowserRouter([
           {
             path: 'my-teller',
             element: (
-              <RequireRole allow={['TELLER']}>
+              <RequireRole allow={[]} allowUsernames={[SUPER_ADMIN_USERNAME]}>
                 <MyTellerPage />
+              </RequireRole>
+            )
+          },
+          {
+            path: 'bets',
+            element: (
+              <RequireRole allow={[]} allowUsernames={[SUPER_ADMIN_USERNAME]}>
+                <BetsPage />
+              </RequireRole>
+            )
+          },
+          {
+            path: 'config',
+            element: (
+              <RequireRole allow={[]} allowUsernames={[SUPER_ADMIN_USERNAME]}>
+                <ConfigPage />
               </RequireRole>
             )
           },

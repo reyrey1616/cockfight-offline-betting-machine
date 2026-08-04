@@ -9,7 +9,8 @@ import type {
   GetFightResponse,
   ListFightsQuery,
   ListFightsResponse,
-  SettleFightRequest
+  SettleFightRequest,
+  UnsettleFightResponse
 } from '@/types/api'
 
 function toQuery(params: ListFightsQuery): Record<string, string | number | boolean> {
@@ -73,6 +74,12 @@ export async function settleFight(
   body: SettleFightRequest
 ): Promise<FightActionResponse> {
   const { data } = await api.post<FightActionResponse>(`/fights/${id}/settle`, body)
+  return data
+}
+
+/** POST /fights/:id/unsettle — admin; SETTLED → CLOSED, reset unpaid bets to PENDING. */
+export async function unsettleFight(id: string): Promise<UnsettleFightResponse> {
+  const { data } = await api.post<UnsettleFightResponse>(`/fights/${id}/unsettle`)
   return data
 }
 

@@ -272,7 +272,8 @@ export function useFightLiveState() {
         if (
           (msg.type === 'FIGHT_CLOSED' ||
             msg.type === 'FIGHT_SETTLED' ||
-            msg.type === 'FIGHT_CANCELLED') &&
+            msg.type === 'FIGHT_CANCELLED' ||
+            msg.type === 'FIGHT_UNSETTLED') &&
           isRecord(msg.data)
         ) {
           dispatch({ type: 'MERGE_LIFECYCLE', data: msg.data })

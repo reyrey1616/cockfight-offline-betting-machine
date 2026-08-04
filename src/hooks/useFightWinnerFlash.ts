@@ -86,7 +86,8 @@ export function useFightWinnerFlash(
         flashOutcomeForSnapshot(prev) &&
         (fight.status === 'OPEN' ||
           fight.status === 'LAST_CALL' ||
-          fight.status === 'SCHEDULED')
+          fight.status === 'SCHEDULED' ||
+          fight.status === 'CLOSED')
       ) {
         dismissDeferred()
       }

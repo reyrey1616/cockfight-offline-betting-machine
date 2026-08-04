@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 
+import { defaultPathForUser } from '@/lib/post-login-redirect'
 import { useAuthUser } from '@/store/auth'
 
 /** `/` inside the app — role-aware landing after login. */
@@ -8,6 +9,5 @@ export function AuthedIndexRedirect() {
   if (!user) {
     return null
   }
-  const to = user.role === 'ADMIN' ? '/dashboard' : '/kiosk'
-  return <Navigate to={to} replace />
+  return <Navigate to={defaultPathForUser(user)} replace />
 }

@@ -116,8 +116,8 @@ export function mergeOddsUpdate(
 }
 
 /**
- * `FIGHT_OPENED` / `FIGHT_CLOSED` / `FIGHT_SETTLED` / `FIGHT_CANCELLED` —
- * `fightProjection` payloads use `fightId` (not `id`).
+ * `FIGHT_OPENED` / `FIGHT_CLOSED` / `FIGHT_SETTLED` / `FIGHT_CANCELLED` /
+ * `FIGHT_UNSETTLED` — `fightProjection` payloads use `fightId` (not `id`).
  */
 export function mergeFightLifecycleProjection(
   fight: Fight,
@@ -149,6 +149,17 @@ export function mergeFightLifecycleProjection(
   if (data.payoutRatioWala !== undefined) {
     next.payoutRatioWala =
       data.payoutRatioWala == null ? null : String(data.payoutRatioWala)
+  }
+
+  // Unsettle (SETTLED → CLOSED with outcome explicitly null): clear settle audit.
+  if (st === 'CLOSED' && 'outcome' in data && oc == null) {
+    next.settledAt = null
+    next.previousOutcome = null
+    next.previousPayoutRatioMeron = null
+    next.previousPayoutRatioWala = null
+    next.correctedAt = null
+    next.correctedByUserId = null
+    next.correctionReason = null
   }
 
   const computed = computeLiveOdds(next)

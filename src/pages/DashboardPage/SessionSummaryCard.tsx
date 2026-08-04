@@ -41,7 +41,7 @@ async function fetchAdminSessionSummary(tellerId?: string): Promise<SessionSumma
 
   const [fightComm, tellerComm, deposits, remittances, scopedBets] = await Promise.all([
     getFightCommissions(),
-    scopeAll ? Promise.resolve(null) : getTellerCommissions(),
+    getTellerCommissions(),
     sumLedgerEntries({ type: 'CASH_ADVANCE', tellerId }),
     sumLedgerEntries({ type: 'REMIT', tellerId }),
     scopeAll ? Promise.resolve(null) : aggregateSessionBets(tellerId)
@@ -50,15 +50,16 @@ async function fetchAdminSessionSummary(tellerId?: string): Promise<SessionSumma
   if (scopeAll) {
     return {
       fightCount: fightComm.totals.fightCount,
-      commission: fightComm.totals.commission,
-      grossHandle: fightComm.totals.grossHandle,
-      betCount: fightComm.totals.betCount,
+      // Bet-driven (same as Commissions by teller) — not fight pools, so bet purge lowers this.
+      commission: tellerComm.totals.commissionGenerated,
+      grossHandle: tellerComm.totals.grossHandle,
+      betCount: tellerComm.totals.betCount,
       totalDeposits: deposits,
       totalRemittances: remittances
     }
   }
 
-  const tellerRow = tellerComm?.tellers.find((t) => t.tellerId === tellerId)
+  const tellerRow = tellerComm.tellers.find((t) => t.tellerId === tellerId)
   return {
     fightCount: fightComm.totals.fightCount,
     commission: tellerRow?.commissionGenerated ?? '0.00',

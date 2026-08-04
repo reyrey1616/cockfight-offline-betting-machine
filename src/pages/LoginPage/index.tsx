@@ -39,7 +39,7 @@ export function LoginPage() {
   const location = useLocation()
   const fromState = (location.state as LocationState | null) ?? null
   const postLoginPath =
-    user != null ? resolvePostLoginPath(user.role, fromState?.from) : '/login'
+    user != null ? resolvePostLoginPath(user, fromState?.from) : '/login'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

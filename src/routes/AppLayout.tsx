@@ -2,6 +2,7 @@
 //
 // Admins: top bar + left SideNav + scrollable main.
 // Tellers: top bar is `TellerChromeHeader` (brand, desk nav, identity, sign-out).
+// Super admin: header + sign-out only (no nav — type URLs for /config, /bets, /my-teller).
 import { Outlet, useNavigate } from 'react-router-dom'
 
 import { AppLogo } from '@/components/AppLogo'
@@ -10,13 +11,15 @@ import { TellerChromeHeader } from '@/components/TellerChromeHeader'
 import { Button } from '@/components/ui/button'
 import { USER_ROLE_LABEL } from '@/constants'
 import { useLogout } from '@/hooks/useAuth'
+import { isSuperAdminUser } from '@/lib/post-login-redirect'
 import { useAuthUser } from '@/store/auth'
 
 export function AppLayout() {
   const user = useAuthUser()
   const navigate = useNavigate()
   const { mutate: doLogout, isPending } = useLogout()
-  const isTeller = user?.role === 'TELLER'
+  const isSuperAdmin = isSuperAdminUser(user)
+  const isTeller = user?.role === 'TELLER' && !isSuperAdmin
 
   function handleLogout() {
     doLogout(undefined, {
@@ -40,7 +43,7 @@ export function AppLayout() {
                   {user.fullName}
                 </span>
                 <span className="rounded-md border bg-muted px-2 py-0.5 text-xs font-medium uppercase text-muted-foreground">
-                  {USER_ROLE_LABEL[user.role]}
+                  {isSuperAdmin ? 'Super admin' : USER_ROLE_LABEL[user.role]}
                 </span>
               </div>
             ) : null}
@@ -51,7 +54,7 @@ export function AppLayout() {
         </header>
       )}
       <div className="flex min-h-0 flex-1">
-        {isTeller ? null : (
+        {isTeller || isSuperAdmin ? null : (
           <div className="shrink-0">
             <SideNav />
           </div>

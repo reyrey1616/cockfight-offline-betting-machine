@@ -136,7 +136,8 @@ export function useDashboardRealtime() {
           msg.type === 'TELLER_COMMISSIONS_UPDATED' ||
           msg.type === 'FIGHT_SETTLED' ||
           msg.type === 'FIGHT_CORRECTED' ||
-          msg.type === 'FIGHT_CANCELLED'
+          msg.type === 'FIGHT_CANCELLED' ||
+          msg.type === 'FIGHT_UNSETTLED'
         ) {
           invalidateLive()
         }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -11,15 +11,9 @@ import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { formatBetListOdds } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import { listBets } from '@/lib/api-bets'
-import {
-  filterUnpaidPayoutsForDashboard,
-  filterUnpaidPayoutsForMyTeller,
-} from '@/lib/unpaid-payout-dashboard'
 import { useAuthUser } from '@/store/auth'
 import type { BetListRow } from '@/types/api'
 import { cn } from '@/lib/utils'
-
-export type UnpaidPayoutsAgeFilter = 'dashboard-recent' | 'my-teller-archived'
 
 function formatBetPayout(bet: BetListRow): string {
   if (bet.payoutAmount == null || bet.payoutAmount === '') return '—'
@@ -27,31 +21,26 @@ function formatBetPayout(bet: BetListRow): string {
 }
 
 export interface MyTellerTableProps {
-  ageFilter?: UnpaidPayoutsAgeFilter
+  /** When set, scopes the list to that teller (admin). Tellers are server-scoped to self. */
   tellerId?: string
   resolveTellerName: (id: string) => string
   panelClassName?: string
+  /** Show reprint actions (used on `/my-teller`). */
+  showReprint?: boolean
 }
 
 export function MyTellerTable({
-  ageFilter = 'dashboard-recent',
   tellerId,
   resolveTellerName,
-  panelClassName
+  panelClassName,
+  showReprint = false
 }: MyTellerTableProps) {
   const actor = useAuthUser()
-  const isArchive = ageFilter === 'my-teller-archived'
-  const scopeKey = tellerId ?? (isArchive ? 'SELF' : 'ALL')
+  const scopeKey = tellerId ?? (showReprint ? 'SELF' : 'ALL')
   const [reprintingBetId, setReprintingBetId] = useState<string | null>(null)
 
   const q = useQuery({
-    queryKey: [
-      ...DASHBOARD_LIVE_QUERY_PREFIX,
-      'bets',
-      'unpaid-payouts',
-      ageFilter,
-      scopeKey
-    ],
+    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'bets', 'unpaid-payouts', scopeKey],
     queryFn: async () => {
       const [won, pendingRefunds] = await Promise.all([
         listBets({ tellerId, status: 'WON', limit: 100 }),
@@ -65,25 +54,10 @@ export function MyTellerTable({
     staleTime: 5_000
   })
 
-  const [nowMs, setNowMs] = useState(() => Date.now())
-  useEffect(() => {
-    const id = window.setInterval(() => setNowMs(Date.now()), 60_000)
-    return () => window.clearInterval(id)
-  }, [])
+  const rows = q.data?.bets ?? []
+  const totalPayout = rows.reduce((sum, b) => sum + Number(b.payoutAmount ?? 0), 0)
 
-  const bets = useMemo(() => {
-    const rows = q.data?.bets ?? []
-    return isArchive
-      ? filterUnpaidPayoutsForMyTeller(rows, nowMs)
-      : filterUnpaidPayoutsForDashboard(rows, nowMs)
-  }, [q.data?.bets, nowMs, isArchive])
-
-  const totalPayout = useMemo(
-    () => bets.reduce((sum, b) => sum + Number(b.payoutAmount ?? 0), 0),
-    [bets]
-  )
-
-  const columnCount = isArchive ? 8 : 7
+  const columnCount = showReprint ? 8 : 7
 
   async function handleReprint(bet: BetListRow) {
     if (reprintingBetId != null) return
@@ -111,8 +85,7 @@ export function MyTellerTable({
   return (
     <Card className={dash.card(panelClassName)}>
       <CardHeader className={dash.header}>
-        <div className="min-w-0 flex-1">
-        </div>
+        <div className="min-w-0 flex-1" />
         <span className={dash.liveBadge}>Live</span>
       </CardHeader>
       <CardContent className="flex flex-col p-0">
@@ -126,7 +99,7 @@ export function MyTellerTable({
               <col style={{ width: '8%' }} />
               <col style={{ width: '10%' }} />
               <col style={{ width: '30%' }} />
-              {isArchive ? <col style={{ width: '12%' }} /> : null}
+              {showReprint ? <col style={{ width: '12%' }} /> : null}
             </colgroup>
             <thead className={dash.thead}>
               <tr className="border-b border-border/60">
@@ -137,7 +110,7 @@ export function MyTellerTable({
                 <th className={`${dash.th} text-center`}>Fight #</th>
                 <th className={dash.th}>Side</th>
                 <th className={dash.th}>When / teller</th>
-                {isArchive ? <th className={dash.th}>Action</th> : null}
+                {showReprint ? <th className={dash.th}>Action</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -153,16 +126,14 @@ export function MyTellerTable({
                     Could not load winning tickets.
                   </td>
                 </tr>
-              ) : bets.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={columnCount} className={dash.empty}>
-                    {isArchive
-                      ? 'No older unpaid tickets.'
-                      : 'No unpaid winners or pending refunds.'}
+                    No unpaid winners or pending refunds.
                   </td>
                 </tr>
               ) : (
-                bets.map((b) => (
+                rows.map((b) => (
                   <tr key={b.id} className={dash.row}>
                     <td className={`${dash.td} font-mono text-[11px] font-semibold`}>{b.code}</td>
                     <td className={`${dash.tdNum} text-right`}>{formatMoney(b.amount)}</td>
@@ -176,7 +147,7 @@ export function MyTellerTable({
                         {b.tellerNameSnapshot ?? resolveTellerName(b.tellerId)}
                       </div>
                     </td>
-                    {isArchive ? (
+                    {showReprint ? (
                       <td className={`${dash.td} text-right`}>
                         <Button
                           type="button"
@@ -198,7 +169,7 @@ export function MyTellerTable({
         </div>
         <div className={cn(dash.summaryBar, 'flex items-center justify-between gap-2')}>
           <span className="text-muted-foreground">
-            {bets.length} ticket{bets.length === 1 ? '' : 's'}
+            {rows.length} ticket{rows.length === 1 ? '' : 's'}
           </span>
           <span className="flex items-baseline gap-2">
             <span className="text-muted-foreground">Total payout</span>
@@ -212,9 +183,7 @@ export function MyTellerTable({
   )
 }
 
-/** @deprecated Use `MyTellerTable` with default `ageFilter`. */
-export function WinningTicketsTable(
-  props: Omit<MyTellerTableProps, 'ageFilter'>
-) {
-  return <MyTellerTable {...props} ageFilter="dashboard-recent" />
+/** @deprecated Use `MyTellerTable`. */
+export function WinningTicketsTable(props: MyTellerTableProps) {
+  return <MyTellerTable {...props} />
 }

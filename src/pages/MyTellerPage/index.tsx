@@ -2,7 +2,6 @@ import { useDashboardRealtime } from '@/hooks/useDashboardRealtime'
 import { MyTellerTable } from '@/pages/DashboardPage/tables/MyTeller'
 import { useAuthUser } from '@/store/auth'
 
-
 export function MyTellerPage() {
   const user = useAuthUser()
   useDashboardRealtime()
@@ -11,10 +10,7 @@ export function MyTellerPage() {
 
   return (
     <div className="space-y-4 p-4 pb-10">
-      <MyTellerTable
-        ageFilter="my-teller-archived"
-        resolveTellerName={resolveTellerName}
-      />
+      <MyTellerTable showReprint resolveTellerName={resolveTellerName} />
     </div>
   )
 }

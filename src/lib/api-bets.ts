@@ -6,6 +6,7 @@ import type {
   PayBetResponse,
   PlaceBetRequest,
   PlaceBetResponse,
+  PurgeBetResponse,
   VoidBetRequest,
   VoidBetResponse,
 } from '@/types/api'
@@ -45,6 +46,17 @@ export async function voidBet(
   const { data } = await api.post<VoidBetResponse>(
     `/bets/${encodeURIComponent(betId)}/void`,
     body
+  )
+  return data
+}
+
+/**
+ * DELETE /bets/:id/purge — admin-only hard delete of a settled WON/LOST/PAID bet
+ * (+ its ledger rows). Fight pools / odds are left unchanged.
+ */
+export async function purgeBet(betId: string): Promise<PurgeBetResponse> {
+  const { data } = await api.delete<PurgeBetResponse>(
+    `/bets/${encodeURIComponent(betId)}/purge`
   )
   return data
 }
