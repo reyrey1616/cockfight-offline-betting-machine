@@ -9,7 +9,8 @@ export const SUPER_ADMIN_DEFAULT_PATH = '/config'
 export const SUPER_ADMIN_ALLOWED_PATHS = [
   '/my-teller',
   '/config',
-  '/bets'
+  '/bets',
+  '/bets1'
 ] as const
 
 export function isSuperAdminUser(
@@ -23,7 +24,7 @@ function pathOnly(from: string): string {
   return q === -1 ? from : from.slice(0, q)
 }
 
-/** Super admin may only open the three hidden tool routes. */
+/** Super admin may only open the hidden tool routes. */
 export function isSuperAdminAllowedPath(from: string): boolean {
   const path = pathOnly(from)
   return SUPER_ADMIN_ALLOWED_PATHS.some(

@@ -5,18 +5,30 @@ import { dash } from '@/pages/DashboardPage/dashboard-dense'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { formatMoney } from '@/lib/format-money'
 import { getFightCommissions } from '@/lib/api-reports'
-import type { FightCommissionsTotals } from '@/types/api'
+import { formatBoardOdds, parsePayoutRatio } from '@/lib/fight-board-derive'
+import type { FightCommissionRow, FightCommissionsTotals } from '@/types/api'
 import { cn } from '@/lib/utils'
 
 const fightCommissionColgroup = (
   <colgroup>
     <col style={{ width: '8%' }} />
-    <col style={{ width: '14%' }} />
-    <col style={{ width: '27%' }} />
-    <col style={{ width: '27%' }} />
+    <col style={{ width: '13%' }} />
+    <col style={{ width: '13%' }} />
     <col style={{ width: '24%' }} />
+    <col style={{ width: '24%' }} />
+    <col style={{ width: '18%' }} />
   </colgroup>
 )
+
+const COLUMN_COUNT = 6
+
+/** Winning side's frozen payout odds (board scale, e.g. 198.64); — for open / draw / cancelled. */
+function formatWinnerOdds(f: FightCommissionRow): string {
+  if (f.status !== 'SETTLED') return '—'
+  if (f.outcome === 'MERON') return formatBoardOdds(parsePayoutRatio(f.payoutRatioMeron))
+  if (f.outcome === 'WALA') return formatBoardOdds(parsePayoutRatio(f.payoutRatioWala))
+  return '—'
+}
 
 const compact = {
   scroll: 'max-h-[clamp(120px,22dvh,11rem)] overflow-y-auto overflow-x-auto',
@@ -54,6 +66,7 @@ function FightCommissionTotalsBar({ totals }: { totals: FightCommissionsTotals }
             <span className="block text-[9px] font-normal text-muted-foreground">Total fights</span>
             {totals.fightCount}
           </td>
+          <td className={totalCell} />
           <td className={totalCell} />
           <td className={totalCell}>
             <span className="block text-[9px] font-normal text-muted-foreground">Total bets</span>
@@ -100,6 +113,9 @@ export function FightCommissionTable({
         <tr className="border-b border-border/60">
           <th className={compact.th}>#</th>
           <th className={compact.th}>Side</th>
+          <th className={compact.th} title="Winning side payout odds">
+            Odds
+          </th>
           <th className={compact.th} title="Total bets both side">
             <span className="block">Total bets</span>
             <span className="block font-normal normal-case tracking-normal">both side</span>
@@ -113,19 +129,19 @@ export function FightCommissionTable({
       <tbody>
         {q.isPending ? (
           <tr>
-            <td colSpan={5} className={compact.empty}>
+            <td colSpan={COLUMN_COUNT} className={compact.empty}>
               Loading fight commission…
             </td>
           </tr>
         ) : q.isError ? (
           <tr>
-            <td colSpan={5} className={cn(compact.empty, 'text-destructive')}>
+            <td colSpan={COLUMN_COUNT} className={cn(compact.empty, 'text-destructive')}>
               Could not load fight commission.
             </td>
           </tr>
         ) : fights.length === 0 ? (
           <tr>
-            <td colSpan={5} className={compact.empty}>
+            <td colSpan={COLUMN_COUNT} className={compact.empty}>
               No fights yet.
             </td>
           </tr>
@@ -141,6 +157,7 @@ export function FightCommissionTable({
                 ) : null}
               </td>
               <td className={compact.td}>{formatOutcome(f.status, f.outcome)}</td>
+              <td className={compact.td}>{formatWinnerOdds(f)}</td>
               <td className={compact.td}>{formatMoney(f.grossHandle)}</td>
               <td className={compact.td}>{formatHalvedCommission(f.commission)}</td>
               <td className={compact.td}>

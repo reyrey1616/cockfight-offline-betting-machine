@@ -5,6 +5,7 @@ import { useDashboardRealtime } from '@/hooks/useDashboardRealtime'
 import { useTellersList } from '@/hooks/useUsers'
 import { USER_ROLE_VALUE } from '@/constants'
 import { useAuthUser } from '@/store/auth'
+import { useShowUnpaidWinningTickets } from '@/store/dashboard-prefs'
 
 import { BettingTransactionsTable } from './tables/BettingTransactionsTable'
 import { CashFlowLedgerTable } from './tables/CashFlowLedgerTable'
@@ -21,6 +22,7 @@ export function DashboardPage() {
   const user = useAuthUser()
   const isAdmin = user?.role === 'ADMIN'
   const [selectedTellerId, setSelectedTellerId] = useState<string | 'ALL'>('ALL')
+  const showUnpaidWinningTickets = useShowUnpaidWinningTickets()
 
   const tellersQuery = useTellersList({ enabled: Boolean(isAdmin) })
   const { wsStatus, lastWsError } = useDashboardRealtime()
@@ -148,6 +150,7 @@ export function DashboardPage() {
       <WinningTicketsTable
         tellerId={apiTellerId}
         resolveTellerName={resolveTellerName}
+        hideRows={!showUnpaidWinningTickets}
         panelClassName="border-violet-300 bg-violet-50/90 dark:border-violet-900 dark:bg-violet-950/40"
       />
 

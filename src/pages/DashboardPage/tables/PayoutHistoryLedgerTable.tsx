@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,9 +11,38 @@ import {
 } from '@/lib/fight-board-derive'
 import { formatMoney } from '@/lib/format-money'
 import { listLedger } from '@/lib/api-cash'
-import type { LedgerEntryRow, LedgerEntryTypeWire } from '@/types/api'
+import { listFights } from '@/lib/api-fights'
+import type { Fight, LedgerEntryRow, LedgerEntryTypeWire, ListLedgerResponse } from '@/types/api'
 
 const COLUMN_COUNT = 7
+const DEFAULT_PAYOUT_LIMIT = 200
+/** API max page size for `/cash/ledger` and `/fights`. */
+const PAGE_SIZE = 200
+
+async function listAllFights(): Promise<Fight[]> {
+  const fights: Fight[] = []
+  let cursor: string | undefined
+  do {
+    const page = await listFights({ limit: PAGE_SIZE, cursor })
+    fights.push(...page.fights)
+    cursor = page.nextCursor ?? undefined
+  } while (cursor)
+  return fights.sort((a, b) => b.fightNumber - a.fightNumber)
+}
+
+async function listAllPayoutsForFight(
+  fightId: string,
+  tellerId?: string
+): Promise<ListLedgerResponse> {
+  const entries: LedgerEntryRow[] = []
+  let cursor: string | undefined
+  do {
+    const page = await listLedger({ tellerId, type: 'PAYOUT', fightId, limit: PAGE_SIZE, cursor })
+    entries.push(...page.entries)
+    cursor = page.nextCursor ?? undefined
+  } while (cursor)
+  return { entries, nextCursor: null }
+}
 
 function signedMoney(amount: string) {
   const n = Number(amount)
@@ -55,15 +85,20 @@ export function PayoutHistoryLedgerTable({
 }: PayoutHistoryLedgerTableProps) {
   const scopeKey = tellerId ?? 'ALL'
   const ledgerType: LedgerEntryTypeWire = 'PAYOUT'
+  const [fightId, setFightId] = useState('')
+
+  const fightsQuery = useQuery({
+    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'fights', 'payout-filter'],
+    queryFn: listAllFights,
+    staleTime: 30_000
+  })
 
   const q = useQuery({
-    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'ledger', ledgerType, scopeKey],
+    queryKey: [...DASHBOARD_LIVE_QUERY_PREFIX, 'ledger', ledgerType, scopeKey, fightId || 'ALL'],
     queryFn: () =>
-      listLedger({
-        tellerId,
-        type: ledgerType,
-        limit: 80
-      }),
+      fightId
+        ? listAllPayoutsForFight(fightId, tellerId)
+        : listLedger({ tellerId, type: ledgerType, limit: DEFAULT_PAYOUT_LIMIT }),
     staleTime: 5_000
   })
 
@@ -73,7 +108,22 @@ export function PayoutHistoryLedgerTable({
     <Card className={dash.card(panelClassName)}>
       <CardHeader className={dash.header}>
         <CardTitle className={dash.title}>Payout history</CardTitle>
-        <span className={dash.liveBadge}>Live</span>
+        <div className="flex items-center gap-2">
+          <select
+            aria-label="Filter payouts by fight"
+            className="h-7 min-w-[8rem] rounded-md border border-input bg-background px-2 text-[11px] shadow-sm"
+            value={fightId}
+            onChange={(e) => setFightId(e.target.value)}
+          >
+            <option value="">All fights (latest {DEFAULT_PAYOUT_LIMIT})</option>
+            {(fightsQuery.data ?? []).map((f) => (
+              <option key={f.id} value={f.id}>
+                Fight #{f.fightNumber}
+              </option>
+            ))}
+          </select>
+          <span className={dash.liveBadge}>Live</span>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col p-0">
         <div className={dash.bodyScroll}>

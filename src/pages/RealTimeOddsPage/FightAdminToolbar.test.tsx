@@ -29,6 +29,42 @@ describe('FightAdminToolbar', () => {
     expect(screen.getByRole('button', { name: /re-open betting/i })).toBeEnabled()
   })
 
+  it('disables open new fight while closed fight has no winner declared', () => {
+    render(
+      <FightAdminToolbar
+        fight={makeFight({ status: 'CLOSED' })}
+        createFight={idleMut()}
+        closeFight={idleMut()}
+        setFightLastCall={idleMut()}
+        resumeFightOpen={idleMut()}
+        reopenFight={idleMut()}
+        settleFight={idleMut()}
+        cancelFight={idleMut()}
+        holdSide={idleMut()}
+        unholdSide={idleMut()}
+      />
+    )
+    expect(screen.getByRole('button', { name: /open new fight/i })).toBeDisabled()
+  })
+
+  it('enables open new fight once the fight is settled', () => {
+    render(
+      <FightAdminToolbar
+        fight={makeFight({ status: 'SETTLED' })}
+        createFight={idleMut()}
+        closeFight={idleMut()}
+        setFightLastCall={idleMut()}
+        resumeFightOpen={idleMut()}
+        reopenFight={idleMut()}
+        settleFight={idleMut()}
+        cancelFight={idleMut()}
+        holdSide={idleMut()}
+        unholdSide={idleMut()}
+      />
+    )
+    expect(screen.getByRole('button', { name: /open new fight/i })).toBeEnabled()
+  })
+
   it('fires hold meron mutation when open', async () => {
     const user = userEvent.setup()
     const holdSide = idleMut()

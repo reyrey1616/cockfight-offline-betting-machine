@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { DASHBOARD_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
+import { clearDeletedBets } from '@/lib/deleted-bets-storage'
 import { listSessionResets, previewSessionReset, resetSession } from '@/lib/api-session'
 import { FIGHTS_QUERY_PREFIX } from '@/lib/fight-query-keys'
 import type { ResetSessionRequest } from '@/types/api'
@@ -30,6 +31,7 @@ export function useResetSession() {
   return useMutation({
     mutationFn: (body: Omit<ResetSessionRequest, 'confirm'>) => resetSession(body),
     onSuccess: () => {
+      clearDeletedBets()
       void queryClient.invalidateQueries({ queryKey: sessionPreviewQueryKey })
       void queryClient.invalidateQueries({ queryKey: sessionResetsQueryKey })
       void queryClient.invalidateQueries({ queryKey: FIGHTS_QUERY_PREFIX })

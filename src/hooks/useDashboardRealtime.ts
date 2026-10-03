@@ -5,6 +5,7 @@ import {
   DASHBOARD_LIVE_QUERY_PREFIX,
   DASHBOARD_QUERY_PREFIX
 } from '@/lib/dashboard-query-keys'
+import { clearDeletedBets } from '@/lib/deleted-bets-storage'
 import { buildRealtimeWebSocketUrl } from '@/lib/ws-url'
 import { useAuthToken } from '@/store/auth'
 
@@ -126,6 +127,7 @@ export function useDashboardRealtime() {
         }
 
         if (msg.type === 'SESSION_RESET') {
+          clearDeletedBets()
           invalidateAllDashboard()
           return
         }

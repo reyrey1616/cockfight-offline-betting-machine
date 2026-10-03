@@ -27,13 +27,16 @@ export interface MyTellerTableProps {
   panelClassName?: string
   /** Show reprint actions (used on `/my-teller`). */
   showReprint?: boolean
+  /** Render as if there were no unpaid tickets (Settings → Dashboard display). */
+  hideRows?: boolean
 }
 
 export function MyTellerTable({
   tellerId,
   resolveTellerName,
   panelClassName,
-  showReprint = false
+  showReprint = false,
+  hideRows = false
 }: MyTellerTableProps) {
   const actor = useAuthUser()
   const scopeKey = tellerId ?? (showReprint ? 'SELF' : 'ALL')
@@ -54,7 +57,7 @@ export function MyTellerTable({
     staleTime: 5_000
   })
 
-  const rows = q.data?.bets ?? []
+  const rows = hideRows ? [] : (q.data?.bets ?? [])
   const totalPayout = rows.reduce((sum, b) => sum + Number(b.payoutAmount ?? 0), 0)
 
   const columnCount = showReprint ? 8 : 7

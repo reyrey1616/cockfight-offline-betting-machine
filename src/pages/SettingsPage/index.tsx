@@ -20,7 +20,6 @@ import type { Setting } from '@/types/api'
 
 import { SessionResetSection } from './SessionResetSection'
 import { AdminVoidBarcodeSection } from './AdminVoidBarcodeSection'
-
 const MAX_COMMISSION_PERCENT = 30
 const MIN_COMMISSION_PERCENT = 0
 

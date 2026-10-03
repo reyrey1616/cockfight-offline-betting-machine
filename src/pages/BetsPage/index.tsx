@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -7,12 +7,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BET_SIDE_LABEL, BET_STATUS_LABEL } from '@/constants'
 import { ApiError } from '@/lib/api'
 import { listBets, purgeBet } from '@/lib/api-bets'
+import { recordDeletedBet } from '@/lib/deleted-bets-storage'
 import { DASHBOARD_LIVE_QUERY_PREFIX } from '@/lib/dashboard-query-keys'
 import { formatMoney } from '@/lib/format-money'
 import { useTellersList } from '@/hooks/useUsers'
 import type { BetListRow, PurgeBetResponse } from '@/types/api'
 
-const PAGE_LIMIT = 200
+const LIST_LIMIT = 500
+/** API max page size for `GET /bets`. */
+const PAGE_SIZE = 200
+const MIN_STAKE_FILTER = 1000
+
+/** Settled PAID bets, newest first, up to {@link LIST_LIMIT} after filtering. */
+async function fetchPurgeableBets(tellerId: string, aboveMinOnly: boolean): Promise<BetListRow[]> {
+  const out: BetListRow[] = []
+  let cursor: string | undefined
+  do {
+    const page = await listBets({
+      tellerId: tellerId || undefined,
+      status: 'PAID',
+      limit: PAGE_SIZE,
+      cursor
+    })
+    for (const b of page.bets) {
+      if (b.fightStatus !== 'SETTLED') continue
+      if (aboveMinOnly && !(Number(b.amount) > MIN_STAKE_FILTER)) continue
+      out.push(b)
+      if (out.length >= LIST_LIMIT) return out
+    }
+    cursor = page.nextCursor ?? undefined
+  } while (cursor)
+  return out
+}
 
 /** Exact dashboard commission drop: (stake × rate) / 2 — matches UI halved display. */
 function previewDashboardCommissionDrop(stake: string, commissionRate?: string | null): string {
@@ -32,24 +58,19 @@ export function BetsPage() {
   const [pendingBet, setPendingBet] = useState<BetListRow | null>(null)
   const [lastResult, setLastResult] = useState<PurgeBetResponse | null>(null)
 
+  const [aboveMinOnly, setAboveMinOnly] = useState(false)
+
   const betsQuery = useQuery({
-    queryKey: ['admin-bets-purge', tellerId || 'ALL'],
-    queryFn: () =>
-      listBets({
-        tellerId: tellerId || undefined,
-        status: 'PAID',
-        limit: PAGE_LIMIT
-      })
+    queryKey: ['admin-bets-purge', tellerId || 'ALL', aboveMinOnly],
+    queryFn: () => fetchPurgeableBets(tellerId, aboveMinOnly)
   })
 
-  const settledPaidBets = useMemo(
-    () => (betsQuery.data?.bets ?? []).filter((b) => b.fightStatus === 'SETTLED'),
-    [betsQuery.data?.bets]
-  )
+  const settledPaidBets = betsQuery.data ?? []
 
   const purgeMutation = useMutation({
     mutationFn: (betId: string) => purgeBet(betId),
     onSuccess: (res) => {
+      recordDeletedBet(res, tellerName(res.purged.tellerId))
       setLastResult(res)
       setPendingBet(null)
       toast.success(
@@ -76,7 +97,8 @@ export function BetsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Filters</CardTitle>
           <CardDescription>
-            Showing up to {PAGE_LIMIT} most recent PAID tickets on settled fights.
+            Showing up to {LIST_LIMIT} most recent PAID tickets on settled fights
+            {aboveMinOnly ? ` with stake above ${MIN_STAKE_FILTER}` : ''}.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3">
@@ -94,6 +116,25 @@ export function BetsPage() {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="flex h-9 cursor-pointer items-center gap-2 text-sm">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={aboveMinOnly}
+              onClick={() => setAboveMinOnly((v) => !v)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                aboveMinOnly ? 'bg-primary' : 'bg-muted-foreground/30'
+              }`}
+            >
+              <span
+                className={`inline-block size-4 rounded-full bg-background shadow transition-transform ${
+                  aboveMinOnly ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+            <span>Above {MIN_STAKE_FILTER} only</span>
+            <span className="text-xs text-muted-foreground">{aboveMinOnly ? 'On' : 'Off'}</span>
           </label>
           <Button
             type="button"

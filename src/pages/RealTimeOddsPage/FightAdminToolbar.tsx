@@ -100,7 +100,14 @@ export function FightAdminToolbar({
     toast.error(e instanceof ApiError ? e.message : e.message)
   }
 
-  const canCreate = fight.status !== 'OPEN' && fight.status !== 'LAST_CALL'
+  const canCreate =
+    fight.status !== 'OPEN' && fight.status !== 'LAST_CALL' && fight.status !== 'CLOSED'
+  const createLockedTitle =
+    fight.status === 'CLOSED'
+      ? 'Declare a winner (or cancel this fight) before opening a new fight.'
+      : fight.status === 'OPEN' || fight.status === 'LAST_CALL'
+        ? 'Close betting and declare a winner before opening a new fight.'
+        : undefined
   const canSetLastCall = fight.status === 'OPEN'
   const canResumeOpen = fight.status === 'LAST_CALL'
   const canClose = fight.status === 'OPEN' || fight.status === 'LAST_CALL'
@@ -134,6 +141,7 @@ export function FightAdminToolbar({
             type="button"
             className={BETTING_CTRL}
             disabled={!canCreate || busy}
+            title={createLockedTitle}
             onClick={() =>
               createFight.mutate(undefined, {
                 onSuccess: () => toast.success('Fight opened'),

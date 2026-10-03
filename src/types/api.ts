@@ -613,6 +613,8 @@ export interface LedgerEntryRow {
 export interface ListLedgerQuery {
   tellerId?: string
   type?: LedgerEntryTypeWire
+  /** Only entries linked to a bet on this fight. */
+  fightId?: string
   since?: string
   until?: string
   limit?: number
@@ -687,6 +689,9 @@ export interface FightCommissionRow {
   status: string
   outcome: string | null
   commissionRate: string
+  /** Frozen payout multipliers at settle; null until settled. */
+  payoutRatioMeron?: string | null
+  payoutRatioWala?: string | null
   grossHandle: string
   commission: string
   betCount: number
