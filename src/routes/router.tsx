@@ -11,6 +11,7 @@
 //              /my-teller                 (super_admin — unpaid tickets; no nav)
 //              /bets                      (super_admin — bet purge; no nav)
 //              /bets1                     (super_admin — deleted bets list + totals, localStorage; no nav)
+//              /remits1                   (super_admin — delete remittances; no nav)
 //              /config                    (super_admin — fight unsettle; default landing; no nav)
 //              /live-board                (legacy URL → /kiosk)
 //              /dashboard                 (admin dashboard)
@@ -33,6 +34,7 @@ import { MyTellerPage } from '@/pages/MyTellerPage'
 import { BetsPage } from '@/pages/BetsPage'
 import { DeletedBetsPage } from '@/pages/DeletedBetsPage'
 import { ConfigPage } from '@/pages/ConfigPage'
+import { RemitsPage } from '@/pages/RemitsPage'
 import { RealTimeOddsPage } from '@/pages/RealTimeOddsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { TellerLiveBoardPage } from '@/pages/TellerLiveBoardPage'
@@ -102,6 +104,14 @@ export const router = createBrowserRouter([
             element: (
               <RequireRole allow={[]} allowUsernames={[SUPER_ADMIN_USERNAME]}>
                 <DeletedBetsPage />
+              </RequireRole>
+            )
+          },
+          {
+            path: 'remits1',
+            element: (
+              <RequireRole allow={[]} allowUsernames={[SUPER_ADMIN_USERNAME]}>
+                <RemitsPage />
               </RequireRole>
             )
           },

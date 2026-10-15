@@ -645,6 +645,11 @@ export interface CashMutationResponse {
   actorBalance: string
 }
 
+/** `DELETE /cash/remits/:id` — super_admin hard delete; teller cash on hand stays unchanged. */
+export interface DeleteRemitResponse {
+  deleted: LedgerEntryRow
+}
+
 // ===========================================================================
 // Reports — `GET /reports/teller-commissions` (admin)
 // ===========================================================================

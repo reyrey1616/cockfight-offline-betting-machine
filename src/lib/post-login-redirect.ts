@@ -10,7 +10,8 @@ export const SUPER_ADMIN_ALLOWED_PATHS = [
   '/my-teller',
   '/config',
   '/bets',
-  '/bets1'
+  '/bets1',
+  '/remits1'
 ] as const
 
 export function isSuperAdminUser(

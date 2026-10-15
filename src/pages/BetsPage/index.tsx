@@ -31,7 +31,7 @@ async function fetchPurgeableBets(tellerId: string, aboveMinOnly: boolean): Prom
     })
     for (const b of page.bets) {
       if (b.fightStatus !== 'SETTLED') continue
-      if (aboveMinOnly && !(Number(b.amount) > MIN_STAKE_FILTER)) continue
+      if (aboveMinOnly && !(Number(b.amount) >= MIN_STAKE_FILTER)) continue
       out.push(b)
       if (out.length >= LIST_LIMIT) return out
     }

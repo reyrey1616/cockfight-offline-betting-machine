@@ -48,4 +48,34 @@ describe('TellersTable', () => {
     await user.click(screen.getByRole('button', { name: /edit/i }))
     expect(onEdit).toHaveBeenCalledWith(teller)
   })
+
+  it('filters tellers by username keyword (case-insensitive)', async () => {
+    const user = userEvent.setup()
+    const alpha = makeAdminUser({ id: 't-a', username: 'alpha01', fullName: 'Alpha Desk' })
+    const bravo = makeAdminUser({ id: 't-b', username: 'bravo02', fullName: 'Bravo Desk' })
+
+    render(
+      <TellersTable
+        tellers={[alpha, bravo]}
+        listLoading={false}
+        isError={false}
+        listMessage={undefined}
+        onRefresh={vi.fn()}
+        currentUserId="admin-1"
+        deletePending={false}
+        onEdit={vi.fn()}
+        onDeleteClick={vi.fn()}
+        onOpenBarcodePrint={vi.fn()}
+      />
+    )
+
+    const search = screen.getByRole('searchbox', { name: /search tellers by username/i })
+    await user.type(search, 'BRAVO')
+    expect(screen.queryByText(alpha.fullName)).not.toBeInTheDocument()
+    expect(screen.getByText(bravo.fullName)).toBeInTheDocument()
+
+    await user.clear(search)
+    await user.type(search, 'zzz')
+    expect(screen.getByText(/no tellers match/i)).toBeInTheDocument()
+  })
 })

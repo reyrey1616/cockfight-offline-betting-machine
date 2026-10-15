@@ -1,12 +1,9 @@
+import { useMemo, useState } from 'react'
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import type { AdminUser } from '@/types/api'
 
 export interface TellersTableProps {
@@ -34,6 +31,13 @@ export function TellersTable({
   onDeleteClick,
   onOpenBarcodePrint
 }: TellersTableProps) {
+  const [search, setSearch] = useState('')
+  const keyword = search.trim().toLowerCase()
+  const filteredTellers = useMemo(
+    () => (keyword ? tellers.filter((u) => u.username.toLowerCase().includes(keyword)) : tellers),
+    [tellers, keyword]
+  )
+
   return (
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
@@ -67,58 +71,74 @@ export function TellersTable({
             No tellers yet. Create the first account using the form.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full min-w-lg text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  <th className="px-3 py-2 font-medium">Name</th>
-                  <th className="px-3 py-2 font-medium">Username</th>
-                  <th className="px-3 py-2 font-medium">Initials</th>
-                  <th className="px-3 py-2 text-right font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tellers.map((u) => (
-                  <tr key={u.id} className="border-b last:border-0">
-                    <td className="px-3 py-2 font-medium text-foreground">{u.fullName}</td>
-                    <td className="px-3 py-2 text-muted-foreground">{u.username}</td>
-                    <td className="px-3 py-2 font-mono text-muted-foreground">{u.initials}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex flex-wrap items-center justify-end gap-1.5">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onOpenBarcodePrint(u)}
-                        >
-                          Barcode
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onEdit(u)}
-                        >
-                          Edit
-                        </Button>
-                        {u.id !== currentUserId ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            disabled={deletePending}
-                            onClick={() => onDeleteClick(u)}
-                          >
-                            Delete
-                          </Button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-3">
+            <Input
+              type="search"
+              placeholder="Search by username…"
+              aria-label="Search tellers by username"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-xs"
+            />
+            {filteredTellers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No tellers match &ldquo;{search.trim()}&rdquo;.
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full min-w-lg text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <th className="px-3 py-2 font-medium">Name</th>
+                      <th className="px-3 py-2 font-medium">Username</th>
+                      <th className="px-3 py-2 font-medium">Initials</th>
+                      <th className="px-3 py-2 text-right font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTellers.map((u) => (
+                      <tr key={u.id} className="border-b last:border-0">
+                        <td className="px-3 py-2 font-medium text-foreground">{u.fullName}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{u.username}</td>
+                        <td className="px-3 py-2 font-mono text-muted-foreground">{u.initials}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onOpenBarcodePrint(u)}
+                            >
+                              Barcode
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onEdit(u)}
+                            >
+                              Edit
+                            </Button>
+                            {u.id !== currentUserId ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                disabled={deletePending}
+                                onClick={() => onDeleteClick(u)}
+                              >
+                                Delete
+                              </Button>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

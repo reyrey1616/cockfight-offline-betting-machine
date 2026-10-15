@@ -4,6 +4,7 @@ import type {
   CashBalanceResponse,
   CashMutationResponse,
   CashRemitRequest,
+  DeleteRemitResponse,
   ListLedgerQuery,
   ListLedgerResponse
 } from '@/types/api'
@@ -29,6 +30,17 @@ export async function postCashAdvance(
 /** POST /cash/remits — remit cash from teller drawer to collector. */
 export async function postCashRemit(body: CashRemitRequest): Promise<CashMutationResponse> {
   const { data } = await api.post<CashMutationResponse>('/cash/remits', body)
+  return data
+}
+
+/**
+ * DELETE /cash/remits/:id — hard delete of a REMIT ledger row.
+ * The API must offset it so teller cash on hand does not change.
+ */
+export async function deleteCashRemit(remitId: string): Promise<DeleteRemitResponse> {
+  const { data } = await api.delete<DeleteRemitResponse>(
+    `/cash/remits/${encodeURIComponent(remitId)}`
+  )
   return data
 }
 
